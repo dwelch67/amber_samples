@@ -64,7 +64,7 @@ input                       i_execute,
 
 output      [31:0]          o_out,
 output      [1:0]           o_flags,        // [1] = N, [0] = Z
-output reg                  o_done = 'd0    // goes high 2 cycles before completion                                          
+output reg                  o_done = 'd0    // goes high 2 cycles before completion
 );
 
 
@@ -85,7 +85,7 @@ wire [32:0] sum_acc1;           // the MSB is the carry out for the upper 32 bit
 
 assign enable         = i_function[0];
 assign accumulate     = i_function[1];
- 
+
 assign multiplier     =  { 2'd0, i_a_in} ;
 assign multiplier_bar = ~{ 2'd0, i_a_in} + 34'd1 ;
 
@@ -100,12 +100,12 @@ assign sum34_b        =  product[1:0] == 2'b01 ? multiplier     :
     // 34-bit adder - booth multiplication
     // -----------------------------------
     `ifdef XILINX_SPARTAN6_FPGA
-        xs6_addsub_n #(.WIDTH(34)) 
+        xs6_addsub_n #(.WIDTH(34))
     `endif
     `ifdef XILINX_VIRTEX6_FPGA
-        xv6_addsub_n #(.WIDTH(34))  
+        xv6_addsub_n #(.WIDTH(34))
     `endif
-        
+
         u_xx_addsub_34_sum (
         .i_a    ( product[67:34]        ),
         .i_b    ( sum34_b               ),
@@ -119,10 +119,10 @@ assign sum34_b        =  product[1:0] == 2'b01 ? multiplier     :
     // 33-bit adder - accumulate operations
     // ------------------------------------
     `ifdef XILINX_SPARTAN6_FPGA
-        xs6_addsub_n #(.WIDTH(33)) 
+        xs6_addsub_n #(.WIDTH(33))
     `endif
     `ifdef XILINX_VIRTEX6_FPGA
-        xv6_addsub_n #(.WIDTH(33)) 
+        xv6_addsub_n #(.WIDTH(33))
     `endif
         u_xx_addsub_33_acc1 (
         .i_a    ( {1'd0, product[32:1]} ),
@@ -134,17 +134,17 @@ assign sum34_b        =  product[1:0] == 2'b01 ? multiplier     :
     );
 
 `else
- 
+
     // -----------------------------------
     // 34-bit adder - booth multiplication
     // -----------------------------------
     assign sum =  product[67:34] + sum34_b;
-     
+
     // ------------------------------------
     // 33-bit adder - accumulate operations
     // ------------------------------------
     assign sum_acc1 = {1'd0, product[32:1]} + {1'd0, i_a_in};
-     
+
 `endif
 
 
@@ -153,25 +153,25 @@ always @*
     // Defaults
     count_nxt           = count;
     product_nxt         = product;
-    
+
     // update Negative and Zero flags
     // Use registered value of product so this adds an extra cycle
     // but this avoids having the 64-bit zero comparator on the
     // main adder path
-    flags_nxt   = { product[32], product[32:1] == 32'd0 }; 
-    
+    flags_nxt   = { product[32], product[32:1] == 32'd0 };
+
 
     if ( count == 6'd0 )
-        product_nxt = {33'd0, 1'd0, i_b_in, 1'd0 } ;
+        product_nxt = {34'd0, 1'd0, i_b_in, 1'd0 } ;
     else if ( count <= 6'd33 )
         product_nxt = { sum[33], sum, product[33:1]} ;
     else if ( count == 6'd34 && accumulate )
         begin
         // Note that bit 0 is not part of the product. It is used during the booth
         // multiplication algorithm
-        product_nxt         = { product[64:33], sum_acc1[31:0], 1'd0}; // Accumulate
+        product_nxt         = {3'd0, product[64:33], sum_acc1[31:0], 1'd0}; // Accumulate
         end
-        
+
     // Multiplication state counter
     if (count == 6'd0)  // start
         count_nxt   = enable ? 6'd1 : 6'd0;
@@ -186,15 +186,15 @@ always @*
 always @ ( posedge i_clk )
     if ( !i_fetch_stall )
         begin
-        count           <= i_execute ? count_nxt          : count;           
-        product         <= i_execute ? product_nxt        : product;        
-        o_done          <= i_execute ? count == 6'd31     : o_done;          
+        count           <= i_execute ? count_nxt          : count;
+        product         <= i_execute ? product_nxt        : product;
+        o_done          <= i_execute ? count == 6'd31     : o_done;
         end
 
 // Outputs
-assign o_out   = product[32:1]; 
+assign o_out   = product[32:1];
 assign o_flags = flags_nxt;
-                     
+
 endmodule
 
 

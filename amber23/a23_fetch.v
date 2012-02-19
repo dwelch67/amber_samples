@@ -60,7 +60,7 @@ input                       i_cache_enable,     // cache enable
 input                       i_cache_flush,      // cache flush
 input       [31:0]          i_cacheable_area,   // each bit corresponds to 2MB address space
 input                       i_system_rdy,
-output                      o_fetch_stall,      // when this is asserted all registers 
+output                      o_fetch_stall,      // when this is asserted all registers
                                                 // in all 3 pipeline stages are held
                                                 // at their current values
 
@@ -77,7 +77,18 @@ input                       i_wb_err
 
 );
 
-`include "memory_configuration.v"
+//`include "memory_configuration.v"
+// Used in fetch.v and l2cache.v to allow accesses to these addresses
+// to be cached
+function in_cachable_mem;
+    input [31:0] address;
+begin
+    in_cachable_mem = ( (address>32'h00001000) && (address<32'h80000000));
+end
+endfunction
+
+
+
 
 wire                        cache_stall;
 wire                        wb_stall;
@@ -99,7 +110,7 @@ assign sel_cache         = address_cachable && i_address_valid && i_cache_enable
 assign sel_wb            = !sel_cache && i_address_valid && !(cache_stall);
 
 // Return read data either from the wishbone bus or the cache
-assign o_read_data       = sel_cache  ? cache_read_data : 
+assign o_read_data       = sel_cache  ? cache_read_data :
                            sel_wb     ? i_wb_dat        :
                                         32'hffeeddcc    ;
 
@@ -109,31 +120,6 @@ assign o_read_data       = sel_cache  ? cache_read_data :
 assign o_fetch_stall     = !i_system_rdy || wb_stall || cache_stall;
 
 
-// ======================================
-// L1 Cache (Unified Instruction and Data)
-// ======================================
-a23_cache u_cache (
-    .i_clk                      ( i_clk                 ),
-     
-    .i_select                   ( sel_cache             ),
-    .i_exclusive                ( i_exclusive           ),
-    .i_write_data               ( i_write_data          ),
-    .i_write_enable             ( i_write_enable        ),
-    .i_address                  ( i_address             ),
-    .i_address_nxt              ( i_address_nxt         ),
-    .i_byte_enable              ( i_byte_enable         ),
-    .i_cache_enable             ( i_cache_enable        ),
-    .i_cache_flush              ( i_cache_flush         ),
-    .o_read_data                ( cache_read_data       ),
-    
-    .o_stall                    ( cache_stall           ),
-    .i_core_stall               ( o_fetch_stall         ),
-    .o_wb_req                   ( cache_wb_req          ),
-    .i_wb_address               ( o_wb_adr              ),
-    .i_wb_read_data             ( i_wb_dat              ),
-    .i_wb_stall                 ( o_wb_stb & ~i_wb_ack  )
-);
-
 
 
 // ======================================
@@ -142,7 +128,7 @@ a23_cache u_cache (
 a23_wishbone u_wishbone (
     // CPU Side
     .i_clk                      ( i_clk                 ),
-    
+
     // Core Accesses to Wishbone bus
     .i_select                   ( sel_wb                ),
     .i_write_data               ( i_write_data          ),
@@ -153,7 +139,7 @@ a23_wishbone u_wishbone (
     .i_address                  ( i_address             ),
     .o_stall                    ( wb_stall              ),
 
-    // Cache Accesses to Wishbone bus 
+    // Cache Accesses to Wishbone bus
     // L1 Cache enable - used for hprot
     .i_cache_req                ( cache_wb_req          ),
 

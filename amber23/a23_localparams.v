@@ -70,7 +70,7 @@ localparam [3:0] AND = 4'h0,        // Logical AND
                  MOV = 4'hd,       // Move
                  BIC = 4'he,       // Bit Clear (using AND & NOT operators)
                  MVN = 4'hf;       // Move NOT
-                 
+
 // Condition Encoding
 localparam [3:0] EQ  = 4'h0,        // Equal            / Z set
                  NE  = 4'h1,        // Not equal        / Z clear
@@ -83,7 +83,7 @@ localparam [3:0] EQ  = 4'h0,        // Equal            / Z set
                  HI  = 4'h8,        // Unsigned higher  / C set and Z clear
                  LS  = 4'h9,        // Unsigned lower
                                     // or same          / C clear or Z set
-                 GE  = 4'ha,        // Signed greater 
+                 GE  = 4'ha,        // Signed greater
                                     // than or equal    / N == V
                  LT  = 4'hb,        // Signed less than / N != V
                  GT  = 4'hc,        // Signed greater
@@ -93,15 +93,15 @@ localparam [3:0] EQ  = 4'h0,        // Equal            / Z set
                  AL  = 4'he,        // Always
                  NV  = 4'hf;        // Never
 
-// Any instruction with a condition field of 0b1111 is UNPREDICTABLE.                
-                
+// Any instruction with a condition field of 0b1111 is UNPREDICTABLE.
+
 // Shift Types
 localparam [1:0] LSL = 2'h0,
                  LSR = 2'h1,
                  ASR = 2'h2,
                  RRX = 2'h3,
-                 ROR = 2'h3; 
- 
+                 ROR = 2'h3;
+
 // Modes
 localparam [1:0] SVC  =  2'b11,  // Supervisor
                  IRQ  =  2'b10,  // Interrupt
@@ -109,7 +109,7 @@ localparam [1:0] SVC  =  2'b11,  // Supervisor
                  USR  =  2'b00;  // User
 
 // One-Hot Mode encodings
-localparam [5:0] OH_USR  = 0,
+localparam [3:0] OH_USR  = 0,
                  OH_IRQ  = 1,
                  OH_FIRQ = 2,
                  OH_SVC  = 3;
