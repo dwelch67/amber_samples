@@ -18,10 +18,10 @@ unsigned char hexline[1024];
 
 
 //16Kbytes
-#define ROMMASK ((16<<10)-1)
+#define ROMMASK ((64<<10)-1)
 unsigned int rom[(ROMMASK+1)>>2];
 #define RAMBASE 0x40000000
-#define RAMMASK ((16<<10)-1)
+#define RAMMASK ((64<<10)-1)
 unsigned int ram[(RAMMASK+1)>>2];
 
 //-----------------------------------------------------------------------------
