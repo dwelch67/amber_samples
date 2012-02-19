@@ -1,0 +1,27 @@
+
+
+VERILOG_FILES = \
+	a25_alu.v \
+	a25_barrel_shift.v \
+	a25_coprocessor.v \
+	a25_core.v \
+	a25_decode.v \
+	a25_execute.v \
+	a25_fetch.v \
+	a25_functions.v \
+	a25_localparams.v \
+	a25_multiply.v \
+	a25_register_bank.v \
+	a25_wishbone.v \
+	generic_sram_byte_en.v \
+	generic_sram_line_en.v
+
+obj_dir/Va25_core : vmain.cpp 
+	verilator --cc a25_core.v --exe vmain.cpp
+	NO_VCD_TRACE=1; make -C obj_dir/ -f Va25_core.mk
+
+clean :
+	rm -rf obj_dir
+	rm -f test.vcd
+
+

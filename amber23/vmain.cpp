@@ -207,113 +207,109 @@ int main(int argc, char *argv[])
         {
             if(top->o_wb_cyc)
             {
-                if(top->o_wb_cyc)
+                if(top->o_wb_sel)
                 {
-                    if(top->o_wb_sel)
+                    addr=top->o_wb_adr;
+                    if(addr<=ROMMASK)
                     {
-                        addr=top->o_wb_adr;
-                        if(addr<=ROMMASK)
+                        if(top->o_wb_we)
                         {
-                            if(top->o_wb_we)
-                            {
-                                printf("Error trying to write to rom 0x%08X\n",addr);
-                            }
-                            else
-                            {
-                                top->i_wb_dat=rom[addr>>2];
-                            }
+                            printf("Error trying to write to rom 0x%08X\n",addr);
                         }
                         else
                         {
-                            if(addr>=RAMBASE)
+                            top->i_wb_dat=rom[addr>>2];
+                        }
+                    }
+                    else
+                    {
+                        if(addr>=RAMBASE)
+                        {
+                            if(addr<=(RAMBASE+RAMMASK))
                             {
-                                if(addr<=(RAMBASE+RAMMASK))
+                                addr&=RAMMASK;
+                                if(top->o_wb_we)
                                 {
-                                    addr&=RAMMASK;
-                                    if(top->o_wb_we)
+                                    //write ram
+                                    if((tick&1)==0)
                                     {
-                                        //write ram
-                                        if((tick&1)==0)
+                                        if(top->o_wb_sel==0x0F)
                                         {
-                                            if(top->o_wb_sel==0x0F)
-                                            {
-                                                //all lanes on, just write
-                                                ram[addr>>2]=top->o_wb_dat;
-                                                //printf("write ram[0x%X]=0x%08X\n",addr,ram[addr>>2]);
-                                            }
-                                            else
-                                            {
-                                                //read-modify-write
-                                                mask=0;
-                                                if(top->o_wb_sel&1) mask|=0x000000FF;
-                                                if(top->o_wb_sel&2) mask|=0x0000FF00;
-                                                if(top->o_wb_sel&4) mask|=0x00FF0000;
-                                                if(top->o_wb_sel&8) mask|=0xFF000000;
-                                                ram[addr>>2]&=~mask;
-                                                ram[addr>>2]|=top->o_wb_dat&mask;
-                                                //printf("write ram[0x%X]=0x%08X\n",addr,ram[addr>>2]);
-                                            }
+                                            //all lanes on, just write
+                                            ram[addr>>2]=top->o_wb_dat;
+                                            //printf("write ram[0x%X]=0x%08X\n",addr,ram[addr>>2]);
                                         }
-                                    }
-                                    else
-                                    {
-                                        //read ram
-                                        top->i_wb_dat=ram[addr>>2];
-                                        if((tick&1)==0)
+                                        else
                                         {
-                                            //printf("read  ram[0x%X]=0x%08X\n",addr,ram[addr>>2]);
+                                            //read-modify-write
+                                            mask=0;
+                                            if(top->o_wb_sel&1) mask|=0x000000FF;
+                                            if(top->o_wb_sel&2) mask|=0x0000FF00;
+                                            if(top->o_wb_sel&4) mask|=0x00FF0000;
+                                            if(top->o_wb_sel&8) mask|=0xFF000000;
+                                            ram[addr>>2]&=~mask;
+                                            ram[addr>>2]|=top->o_wb_dat&mask;
+                                            //printf("write ram[0x%X]=0x%08X\n",addr,ram[addr>>2]);
                                         }
                                     }
                                 }
                                 else
                                 {
-                                    //peripherals
-                                    if(addr==0xD0000000)
+                                    //read ram
+                                    top->i_wb_dat=ram[addr>>2];
+                                    if((tick&1)==0)
                                     {
-                                        if(top->o_wb_we)
-                                        {
-                                            if((tick&1)==0)
-                                            {
-                                                printf("%c",top->o_wb_dat&0xFF);
-                                            }
-                                        }
-                                    }
-                                    if(addr==0xD1000000)
-                                    {
-                                        if(top->o_wb_we)
-                                        {
-                                            if((tick&1)==0)
-                                            {
-                                                printf("cant write or change timer tick\n");
-                                            }
-                                        }
-                                        else
-                                        {
-                                            top->i_wb_dat=tick;
-                                        }
-                                    }
-                                    if(addr==0xE0000000)
-                                    {
-                                        if(top->o_wb_we)
-                                        {
-                                            if((tick&1)==0)
-                                            {
-                                                printf("show 0x%08X\n",top->o_wb_dat);
-                                            }
-                                        }
-                                    }
-                                    if(addr==0xF0000000)
-                                    {
-                                        simhalt=1;
+                                        //printf("read  ram[0x%X]=0x%08X\n",addr,ram[addr>>2]);
                                     }
                                 }
                             }
+                            else
+                            {
+                                //peripherals
+                                if(addr==0xD0000000)
+                                {
+                                    if(top->o_wb_we)
+                                    {
+                                        if((tick&1)==0)
+                                        {
+                                            printf("%c",top->o_wb_dat&0xFF);
+                                        }
+                                    }
+                                }
+                                if(addr==0xD1000000)
+                                {
+                                    if(top->o_wb_we)
+                                    {
+                                        if((tick&1)==0)
+                                        {
+                                            printf("cant write or change timer tick\n");
+                                        }
+                                    }
+                                    else
+                                    {
+                                        top->i_wb_dat=tick;
+                                    }
+                                }
+                                if(addr==0xE0000000)
+                                {
+                                    if(top->o_wb_we)
+                                    {
+                                        if((tick&1)==0)
+                                        {
+                                            printf("show 0x%08X\n",top->o_wb_dat);
+                                        }
+                                    }
+                                }
+                                if(addr==0xF0000000)
+                                {
+                                    simhalt=1;
+                                }
+                            }
                         }
-                        top->i_wb_ack=1;
                     }
+                    top->i_wb_ack=1;
                 }
             }
-
         }
         else
         {

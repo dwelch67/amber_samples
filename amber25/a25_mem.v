@@ -65,20 +65,28 @@ output      [31:0]          o_mem_read_data,
 output                      o_mem_read_data_valid,
 output      [10:0]          o_mem_load_rd,          // The destination register for a load instruction
 
-// Wishbone accesses                                                         
+// Wishbone accesses
 output                      o_wb_cached_req,        // Cached Request
 output                      o_wb_uncached_req,      // Unached Request
 output                      o_wb_write,             // Read=0, Write=1
 output     [15:0]           o_wb_byte_enable,       // byte eable
 output     [127:0]          o_wb_write_data,
-output     [31:0]           o_wb_address,           // wb bus                                 
-input      [127:0]          i_wb_uncached_rdata,    // wb bus                              
-input      [127:0]          i_wb_cached_rdata,      // wb bus                              
+output     [31:0]           o_wb_address,           // wb bus
+input      [127:0]          i_wb_uncached_rdata,    // wb bus
+input      [127:0]          i_wb_cached_rdata,      // wb bus
 input                       i_wb_cached_ready,      // wishbone access complete and read data valid
 input                       i_wb_uncached_ready     // wishbone access complete and read data valid
 );
 
-`include "memory_configuration.v"
+//`include "memory_configuration.v"
+// Used in fetch.v and l2cache.v to allow accesses to these addresses
+// to be cached
+function in_cachable_mem;
+    input [31:0] address;
+begin
+    in_cachable_mem = (address < 32'h80000000 );
+end
+endfunction
 
 wire    [31:0]              cache_read_data;
 wire                        address_cachable;
@@ -128,11 +136,11 @@ assign wb_rdata32               = i_daddress[3:2] == 2'd0 ? i_wb_uncached_rdata[
                                   i_daddress[3:2] == 2'd1 ? i_wb_uncached_rdata[ 63:32] :
                                   i_daddress[3:2] == 2'd2 ? i_wb_uncached_rdata[ 95:64] :
                                                             i_wb_uncached_rdata[127:96] ;
-                                                            
-assign mem_read_data_c          = sel_cache             ? cache_read_data : 
+
+assign mem_read_data_c          = sel_cache             ? cache_read_data :
                                   uncached_data_access  ? wb_rdata32      :
                                                           32'h76543210    ;
-                                                          
+
 assign mem_load_rd_c            = {i_daddress[1:0], i_exec_load_rd};
 assign mem_read_data_valid_c    = i_daddress_valid && !i_write_enable && !o_mem_stall;
 
@@ -188,32 +196,6 @@ always @( posedge i_clk )
         mem_read_data_valid_r   <= mem_read_data_valid_c;
         end
 
-
-// ======================================
-// L1 Data Cache
-// ======================================
-a25_dcache u_dcache (
-    .i_clk                      ( i_clk                 ),
-    .i_fetch_stall              ( i_fetch_stall         ),
-    .i_exec_stall               ( i_exec_stall          ),
-    .o_stall                    ( cache_stall           ),
-     
-    .i_request                  ( sel_cache_p           ),
-    .i_exclusive                ( i_exclusive           ),
-    .i_write_data               ( i_write_data          ),
-    .i_write_enable             ( i_write_enable        ),
-    .i_address                  ( i_daddress            ),
-    .i_address_nxt              ( i_daddress_nxt        ),
-    .i_byte_enable              ( i_byte_enable         ),
-
-    .i_cache_enable             ( i_cache_enable        ),
-    .i_cache_flush              ( i_cache_flush         ),
-    .o_read_data                ( cache_read_data       ),
-    
-    .o_wb_cached_req            ( cached_wb_req         ),
-    .i_wb_cached_rdata          ( i_wb_cached_rdata     ),
-    .i_wb_cached_ready          ( i_wb_cached_ready     )
-);
 
 
 

@@ -77,9 +77,9 @@ input                       i_rdata_valid
 // Signals
 // ----------------------------------------------------
 reg  [1:0]                  wbuf_used_r     = 'd0;
-reg  [127:0]                wbuf_wdata_r    [1:0]; 
-reg  [31:0]                 wbuf_addr_r     [1:0]; 
-reg  [15:0]                 wbuf_be_r       [1:0]; 
+reg  [127:0]                wbuf_wdata_r    [1:0];
+reg  [31:0]                 wbuf_addr_r     [1:0];
+reg  [15:0]                 wbuf_be_r       [1:0];
 reg  [1:0]                  wbuf_write_r    = 'd0;
 reg                         wbuf_wp_r       = 'd0;        // write buf write pointer
 reg                         wbuf_rp_r       = 'd0;        // write buf read pointer
@@ -87,6 +87,9 @@ reg                         busy_reading_r  = 'd0;
 reg                         wait_rdata_valid_r = 'd0;
 wire                        in_wreq;
 reg                         ack_owed_r      = 'd0;
+
+wire push;
+wire pop;
 
 // ----------------------------------------------------
 // Access Buffer
@@ -108,7 +111,7 @@ always @(posedge i_clk)
         ack_owed_r = 1'd1;
     else if (!i_req && o_ack)
         ack_owed_r = 1'd0;
-        
+
 always @(posedge i_clk)
     if (push)
         begin
@@ -122,7 +125,7 @@ always @(posedge i_clk)
 always @(posedge i_clk)
     if (pop)
         wbuf_rp_r                  <= !wbuf_rp_r;
-            
+
 
 // ----------------------------------------------------
 // Output logic
@@ -147,7 +150,7 @@ always@(posedge i_clk)
 always@(posedge i_clk)
     if (o_valid && !o_write && i_accepted)
         wait_rdata_valid_r <= 1'd1;
-    else if (i_rdata_valid)  
+    else if (i_rdata_valid)
         wait_rdata_valid_r <= 1'd0;
 endmodule
 

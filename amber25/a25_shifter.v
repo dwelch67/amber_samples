@@ -73,7 +73,7 @@ wire [32:0] ror_out;
 generate
 if (FULL_BARREL == 1) begin : full_lsl
 
-    assign lsl_out = i_shift_imm_zero         ? {i_carry_in, i_in              } :  // fall through case 
+    assign lsl_out = i_shift_imm_zero         ? {i_carry_in, i_in              } :  // fall through case
 
                      i_shift_amount == 8'd 0  ? {i_carry_in, i_in              } :  // fall through case
                      i_shift_amount == 8'd 1  ? {i_in[31],   i_in[30: 0],  1'd0} :
@@ -87,7 +87,7 @@ if (FULL_BARREL == 1) begin : full_lsl
                      i_shift_amount == 8'd 9  ? {i_in[23],   i_in[22: 0],  9'd0} :
                      i_shift_amount == 8'd10  ? {i_in[22],   i_in[21: 0], 10'd0} :
                      i_shift_amount == 8'd11  ? {i_in[21],   i_in[20: 0], 11'd0} :
-                        
+
                      i_shift_amount == 8'd12  ? {i_in[20],   i_in[19: 0], 12'd0} :
                      i_shift_amount == 8'd13  ? {i_in[19],   i_in[18: 0], 13'd0} :
                      i_shift_amount == 8'd14  ? {i_in[18],   i_in[17: 0], 14'd0} :
@@ -111,15 +111,15 @@ if (FULL_BARREL == 1) begin : full_lsl
                      i_shift_amount == 8'd31  ? {i_in[ 1],   i_in[ 0: 0], 31'd0} :
                      i_shift_amount == 8'd32  ? {i_in[ 0],   32'd0             } :  // 32
                                                 {1'd0,       32'd0             } ;  // > 32
-                                            
+
 end
 else begin : quick_lsl
 
     // only gives the correct result if the shift value is < 4
-    assign lsl_out = i_shift_imm_zero        ? {i_carry_in, i_in              } : // fall through case 
-                     i_shift_amount == 2'd0  ? {i_carry_in, i_in              } : // fall through case
-                     i_shift_amount == 2'd1  ? {i_in[31],   i_in[30: 0],  1'd0} :
-                     i_shift_amount == 2'd2  ? {i_in[30],   i_in[29: 0],  2'd0} :
+    assign lsl_out = i_shift_imm_zero        ? {i_carry_in, i_in              } : // fall through case
+                     i_shift_amount == 8'd0  ? {i_carry_in, i_in              } : // fall through case
+                     i_shift_amount == 8'd1  ? {i_in[31],   i_in[30: 0],  1'd0} :
+                     i_shift_amount == 8'd2  ? {i_in[30],   i_in[29: 0],  2'd0} :
                                                {i_in[29],   i_in[28: 0],  3'd0} ; // 3
 
 end
@@ -127,7 +127,7 @@ endgenerate
 
 
 // The form of the shift field which might be expected to correspond to LSR #0 is used
-// to encode LSR #32, which has a zero result with bit 31 of Rm as the carry output. 
+// to encode LSR #32, which has a zero result with bit 31 of Rm as the carry output.
 generate
 if (FULL_BARREL == 1) begin : full_lsr
 
@@ -143,7 +143,7 @@ if (FULL_BARREL == 1) begin : full_lsr
                      i_shift_amount == 8'd 7  ? {i_in[ 6],  7'd0, i_in[31: 7]} :
                      i_shift_amount == 8'd 8  ? {i_in[ 7],  8'd0, i_in[31: 8]} :
                      i_shift_amount == 8'd 9  ? {i_in[ 8],  9'd0, i_in[31: 9]} :
-                        
+
                      i_shift_amount == 8'd10  ? {i_in[ 9], 10'd0, i_in[31:10]} :
                      i_shift_amount == 8'd11  ? {i_in[10], 11'd0, i_in[31:11]} :
                      i_shift_amount == 8'd12  ? {i_in[11], 12'd0, i_in[31:12]} :
@@ -204,7 +204,7 @@ if (FULL_BARREL == 1) begin : full_asr
                      i_shift_amount == 8'd 7  ? {i_in[ 6], { 8{i_in[31]}}, i_in[30: 7]} :
                      i_shift_amount == 8'd 8  ? {i_in[ 7], { 9{i_in[31]}}, i_in[30: 8]} :
                      i_shift_amount == 8'd 9  ? {i_in[ 8], {10{i_in[31]}}, i_in[30: 9]} :
-                        
+
                      i_shift_amount == 8'd10  ? {i_in[ 9], {11{i_in[31]}}, i_in[30:10]} :
                      i_shift_amount == 8'd11  ? {i_in[10], {12{i_in[31]}}, i_in[30:11]} :
                      i_shift_amount == 8'd12  ? {i_in[11], {13{i_in[31]}}, i_in[30:12]} :
@@ -251,7 +251,7 @@ if (FULL_BARREL == 1) begin : full_ror
     assign ror_out = i_shift_imm_zero              ? {i_in[ 0], i_carry_in,  i_in[31: 1]} :  // RXR, (ROR w/ imm 0)
 
                      i_shift_amount[7:0] == 8'd 0  ? {i_carry_in, i_in                  } :  // fall through case
-                     
+
                      i_shift_amount[4:0] == 5'd 0  ? {i_in[31], i_in                    } :  // Rs > 31
                      i_shift_amount[4:0] == 5'd 1  ? {i_in[ 0], i_in[    0], i_in[31: 1]} :
                      i_shift_amount[4:0] == 5'd 2  ? {i_in[ 1], i_in[ 1: 0], i_in[31: 2]} :
@@ -262,7 +262,7 @@ if (FULL_BARREL == 1) begin : full_ror
                      i_shift_amount[4:0] == 5'd 7  ? {i_in[ 6], i_in[ 6: 0], i_in[31: 7]} :
                      i_shift_amount[4:0] == 5'd 8  ? {i_in[ 7], i_in[ 7: 0], i_in[31: 8]} :
                      i_shift_amount[4:0] == 5'd 9  ? {i_in[ 8], i_in[ 8: 0], i_in[31: 9]} :
-                        
+
                      i_shift_amount[4:0] == 5'd10  ? {i_in[ 9], i_in[ 9: 0], i_in[31:10]} :
                      i_shift_amount[4:0] == 5'd11  ? {i_in[10], i_in[10: 0], i_in[31:11]} :
                      i_shift_amount[4:0] == 5'd12  ? {i_in[11], i_in[11: 0], i_in[31:12]} :
@@ -299,7 +299,7 @@ else begin : quick_ror
 
 end
 endgenerate
- 
+
 assign {o_carry_out, o_out} = i_function == LSL ? lsl_out :
                               i_function == LSR ? lsr_out :
                               i_function == ASR ? asr_out :

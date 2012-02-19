@@ -67,20 +67,12 @@ assign o_wb_load_rd         = mem_load_rd_r;
 
 always @( posedge i_clk )
     if ( !i_mem_stall )
-        begin                                                                                                             
+        begin
         mem_read_data_r         <= i_mem_read_data;
         mem_read_data_valid_r   <= i_mem_read_data_valid;
         mem_load_rd_r           <= i_mem_load_rd;
         end
 
-
-// Used by a25_decompile.v, so simulation only
-//synopsys translate_off    
-reg  [31:0]         daddress_r = 'd0;               // Register read data from Data Cache
-always @( posedge i_clk )
-    if ( !i_mem_stall )
-        daddress_r              <= i_daddress;
-//synopsys translate_on    
 
 endmodule
 
