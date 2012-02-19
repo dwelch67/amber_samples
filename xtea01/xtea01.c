@@ -13,28 +13,29 @@ extern void uart_init ( void );
 extern void uart_putc ( unsigned char );
 extern void hexstring ( unsigned int );
 extern void hexstrings ( unsigned int );
+
 //-------------------------------------------------------------------------
-void encrypt (unsigned int* v, unsigned int* k) {
-    unsigned int v0=v[0], v1=v[1], sum=0, i;           /* set up */
-    unsigned int delta=0x9e3779b9;                     /* a key schedule constant */
-    unsigned int k0=k[0], k1=k[1], k2=k[2], k3=k[3];   /* cache key */
-    for (i=0; i < 32; i++) {                       /* basic cycle start */
+void encipher(unsigned int num_rounds, unsigned int v[2], unsigned int const key[4])
+{
+    unsigned int i;
+    unsigned int v0=v[0], v1=v[1], sum=0, delta=0x9E3779B9;
+    for (i=0; i < num_rounds; i++) {
+        v0 += (((v1 << 4) ^ (v1 >> 5)) + v1) ^ (sum + key[sum & 3]);
         sum += delta;
-        v0 += ((v1<<4) + k0) ^ (v1 + sum) ^ ((v1>>5) + k1);
-        v1 += ((v0<<4) + k2) ^ (v0 + sum) ^ ((v0>>5) + k3);
-    }                                              /* end cycle */
+        v1 += (((v0 << 4) ^ (v0 >> 5)) + v0) ^ (sum + key[(sum>>11) & 3]);
+    }
     v[0]=v0; v[1]=v1;
 }
 //-------------------------------------------------------------------------
-void decrypt (unsigned int* v, unsigned int* k) {
-    unsigned int v0=v[0], v1=v[1], sum=0xC6EF3720, i;  /* set up */
-    unsigned int delta=0x9e3779b9;                     /* a key schedule constant */
-    unsigned int k0=k[0], k1=k[1], k2=k[2], k3=k[3];   /* cache key */
-    for (i=0; i<32; i++) {                         /* basic cycle start */
-        v1 -= ((v0<<4) + k2) ^ (v0 + sum) ^ ((v0>>5) + k3);
-        v0 -= ((v1<<4) + k0) ^ (v1 + sum) ^ ((v1>>5) + k1);
+void decipher(unsigned int num_rounds, unsigned int v[2], unsigned int const key[4])
+{
+    unsigned int i;
+    unsigned int v0=v[0], v1=v[1], delta=0x9E3779B9, sum=delta*num_rounds;
+    for (i=0; i < num_rounds; i++) {
+        v1 -= (((v0 << 4) ^ (v0 >> 5)) + v0) ^ (sum + key[(sum>>11) & 3]);
         sum -= delta;
-    }                                              /* end cycle */
+        v0 -= (((v1 << 4) ^ (v1 >> 5)) + v1) ^ (sum + key[sum & 3]);
+    }
     v[0]=v0; v[1]=v1;
 }
 //-------------------------------------------------------------------------
@@ -64,7 +65,7 @@ int run_tea_test ( void )
     {
         data[0]=testdata[ra+0];
         data[1]=testdata[ra+1];
-        encrypt(data,key);
+        encipher(32,data,key);
         edata[ra+0]=data[0];
         edata[ra+1]=data[1];
     }
@@ -73,7 +74,7 @@ int run_tea_test ( void )
     {
         data[0]=edata[ra+0];
         data[1]=edata[ra+1];
-        decrypt(data,key);
+        decipher(32,data,key);
         if(data[0]!=testdata[ra+0])
         {
             errors++;
