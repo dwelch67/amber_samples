@@ -130,31 +130,16 @@ unsigned char t;
             case 0x01:
                 printf("End of data\n");
                 break;
-            case 0x04:
-                    addhigh=hexline[ra+4];
-                    addhigh<<=8; addhigh|=hexline[ra+5];
-            //:02 0000 04 0300 F7
-                addhigh<<=16;
-                printf("addhigh %08X\n",addhigh);
-                break;
-
         }
     }
 
     //printf("%u lines processed\n",line);
     //printf("%08X\n",maxadd);
 
-    //if(maxadd&0x7F)
+    //for(ra=0;ra<maxadd;ra+=4)
     //{
-        //maxadd+=0x80;
-        //maxadd&=0xFFFFFF80;
-        //printf("%08X\n",maxadd);
+        //printf("0x%08X: 0x%04X\n",ra,rom[ra>>2]);
     //}
-
-    for(ra=0;ra<maxadd;ra+=4)
-    {
-        printf("0x%08X: 0x%04X\n",ra,rom[ra>>2]);
-    }
 
     return(0);
 
@@ -166,6 +151,8 @@ int main(int argc, char *argv[])
     unsigned int tick;
     int ret;
     unsigned int addr;
+    unsigned int mask;
+    unsigned int simhalt;
 
     FILE *fp;
 
@@ -197,6 +184,7 @@ int main(int argc, char *argv[])
     trace->open("test.vcd");
 
     top->i_system_rdy = 0;
+    simhalt=0;
     while (!Verilated::gotFinish())
     {
 
@@ -214,7 +202,7 @@ int main(int argc, char *argv[])
             {
                 if(top->o_wb_cyc)
                 {
-                    if(top->o_wb_sel==0xF)
+                    if(top->o_wb_sel)
                     {
                         addr=top->o_wb_adr;
                         if(addr<=ROMMASK)
@@ -237,11 +225,61 @@ int main(int argc, char *argv[])
                                     addr&=RAMMASK;
                                     if(top->o_wb_we)
                                     {
-                                        ram[addr>>2]=top->o_wb_dat;
+                                        //write ram
+                                        if((tick&1)==0)
+                                        {
+                                            if(top->o_wb_sel==0x0F)
+                                            {
+                                                //all lanes on, just write
+                                                ram[addr>>2]=top->o_wb_dat;
+                                                //printf("write ram[0x%X]=0x%08X\n",addr,ram[addr>>2]);
+                                            }
+                                            else
+                                            {
+                                                //read-modify-write
+                                                mask=0;
+                                                if(top->o_wb_sel&1) mask|=0x000000FF;
+                                                if(top->o_wb_sel&2) mask|=0x0000FF00;
+                                                if(top->o_wb_sel&4) mask|=0x00FF0000;
+                                                if(top->o_wb_sel&8) mask|=0xFF000000;
+                                                ram[addr>>2]&=~mask;
+                                                ram[addr>>2]|=top->o_wb_dat&mask;
+                                                //printf("write ram[0x%X]=0x%08X\n",addr,ram[addr>>2]);
+                                            }
+                                        }
                                     }
                                     else
                                     {
+                                        //read ram
                                         top->i_wb_dat=ram[addr>>2];
+                                    }
+                                }
+                                else
+                                {
+                                    //peripherals
+                                    if(addr==0xD0000000)
+                                    {
+                                        if(top->o_wb_we)
+                                        {
+                                            if((tick&1)==0)
+                                            {
+                                                printf("%c",top->o_wb_dat&0xFF);
+                                            }
+                                        }
+                                    }
+                                    if(addr==0xE0000000)
+                                    {
+                                        if(top->o_wb_we)
+                                        {
+                                            if((tick&1)==0)
+                                            {
+                                                printf("show 0x%08X\n",top->o_wb_dat);
+                                            }
+                                        }
+                                    }
+                                    if(addr==0xF0000000)
+                                    {
+                                        simhalt=1;
                                     }
                                 }
                             }
@@ -257,7 +295,8 @@ int main(int argc, char *argv[])
         top->eval();
         trace->dump(tick);
 
-        if(tick>2000) break;
+        if(tick>200000) break;
+        if(simhalt) break;
     }
     trace->close();
     top->final();
