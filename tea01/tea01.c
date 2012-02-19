@@ -154,10 +154,15 @@ int run_tea_test ( void )
 //-------------------------------------------------------------------------
 int notmain ( void )
 {
+    unsigned int beg,end;
+
     uart_init();
     hexstring(0x12340000);
 
+    beg=GET32(0xD1000000);
     run_tea_test();
+    end=GET32(0xD1000000);
+    hexstring(end-beg);
 
     hexstring(0x12345678);
     return(0);

@@ -2,7 +2,6 @@
 VERILOG_FILES = \
 	a23_alu.v \
 	a23_barrel_shift.v \
-	a23_cache.v \
 	a23_coprocessor.v \
 	a23_core.v \
 	a23_decode.v \

@@ -56,9 +56,6 @@ input                       i_priviledged,
 input                       i_exclusive,        // high for read part of swap access
 input       [3:0]           i_byte_enable,
 input                       i_data_access,      // high for data petch, low for instruction fetch
-input                       i_cache_enable,     // cache enable
-input                       i_cache_flush,      // cache flush
-input       [31:0]          i_cacheable_area,   // each bit corresponds to 2MB address space
 input                       i_system_rdy,
 output                      o_fetch_stall,      // when this is asserted all registers
                                                 // in all 3 pipeline stages are held
@@ -77,49 +74,24 @@ input                       i_wb_err
 
 );
 
-//`include "memory_configuration.v"
-// Used in fetch.v and l2cache.v to allow accesses to these addresses
-// to be cached
-function in_cachable_mem;
-    input [31:0] address;
-begin
-    in_cachable_mem = ( (address>32'h00001000) && (address<32'h80000000));
-end
-endfunction
 
-
-
-
-wire                        cache_stall;
 wire                        wb_stall;
-wire    [31:0]              cache_read_data;
-wire                        sel_cache;
 wire                        sel_wb;
-wire                        cache_wb_req;
-wire                        address_cachable;
 
 // ======================================
 // Memory Decode
 // ======================================
-assign address_cachable  = in_cachable_mem( i_address ) && i_cacheable_area[i_address[25:21]];
 
-assign sel_cache         = address_cachable && i_address_valid && i_cache_enable &&  !i_exclusive;
-
-// Don't start wishbone transfers when the cache is stalling the core
-// The cache stalls the core during its initialization sequence
-assign sel_wb            = !sel_cache && i_address_valid && !(cache_stall);
+assign sel_wb            = i_address_valid ;
 
 // Return read data either from the wishbone bus or the cache
-assign o_read_data       = sel_cache  ? cache_read_data :
-                           sel_wb     ? i_wb_dat        :
+assign o_read_data       = sel_wb     ? i_wb_dat        :
                                         32'hffeeddcc    ;
 
 // Stall the instruction decode and execute stages of the core
 // when the fetch stage needs more than 1 cycle to return the requested
 // read data
-assign o_fetch_stall     = !i_system_rdy || wb_stall || cache_stall;
-
-
+assign o_fetch_stall     = !i_system_rdy || wb_stall ;
 
 
 // ======================================
@@ -138,10 +110,6 @@ a23_wishbone u_wishbone (
     .i_exclusive                ( i_exclusive           ),
     .i_address                  ( i_address             ),
     .o_stall                    ( wb_stall              ),
-
-    // Cache Accesses to Wishbone bus
-    // L1 Cache enable - used for hprot
-    .i_cache_req                ( cache_wb_req          ),
 
     .o_wb_adr                   ( o_wb_adr              ),
     .o_wb_sel                   ( o_wb_sel              ),

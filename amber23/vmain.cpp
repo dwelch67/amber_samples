@@ -150,7 +150,7 @@ unsigned char t;
 
 int main(int argc, char *argv[])
 {
-
+    unsigned int lasttick;
     unsigned int tick;
     unsigned int addr;
     unsigned int mask;
@@ -191,6 +191,8 @@ int main(int argc, char *argv[])
     top->i_system_rdy = 0;
     simhalt=0;
     did_reset=0;
+    tick=0;
+    lasttick=tick;
     while (!Verilated::gotFinish())
     {
 
@@ -198,6 +200,9 @@ int main(int argc, char *argv[])
         top->i_wb_ack=0;
 
         tick++;
+        if(tick<lasttick) printf("tick rollover\n");
+        lasttick=tick;
+
         if(did_reset)
         {
             if(top->o_wb_cyc)

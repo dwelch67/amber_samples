@@ -301,3 +301,9 @@ large, I have an alternate build for the simulator
 make -f Makefile.forever
 It sims faster, does not stop until you stop it with a write to 0xF0000000
 and does not produce waveforms.
+
+Apparently I had already chucked some of the cache.  Tried to get it
+working (with verilator) and failed, so I chucked it, if you try to
+turn it on, it doesnt do anything you keep on running without.  Maybe
+someday I will add it back.  Maybe amber25 with separate caches will
+"just work" with verilator.

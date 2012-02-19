@@ -54,10 +54,7 @@ input                       i_fault,          // high to latch the fault address
 input       [7:0]           i_fault_status,
 input       [31:0]          i_fault_address,  // the address that caused the fault
 
-output reg  [31:0]          o_copro_read_data,
-output                      o_cache_enable,
-output                      o_cache_flush,
-output      [31:0]          o_cacheable_area
+output reg  [31:0]          o_copro_read_data
 );
 
 // Bit 0 - Cache on(1)/off
@@ -90,9 +87,6 @@ wire       copro15_reg1_write;
 // ---------------------------
 // Outputs
 // ---------------------------
-assign o_cache_enable   = cache_control[0];
-assign o_cache_flush    = copro15_reg1_write;
-assign o_cacheable_area = cacheable_area;
 
 // ---------------------------
 // Capture an access fault address and status
