@@ -1,0 +1,235 @@
+
+I was very happy to wander across this processor
+
+http://opencores.com/project,amber
+http://en.wikipedia.org/wiki/Amber_(processor_core)
+
+You can see from the description that it is an armv2 compatible processor
+which is the predecessor to the ARM family of processors that is in
+many of the electronic devices we use on a daily basis.
+
+You can definitely see the similarities and differences.  The memory
+space is smaller.   The program counter is very different, flags and
+mode are part of the program counter in an arm2, the armv4 and newer
+that we are used to has separate place to store this information leaving
+almost all of the program counter to be address (the lsbit indicates
+thumb mode vs arm mode).  Another noticeable difference is the armv2
+only supports 32 bit and 8 bit accesses (ldr, ldrb, str, strb) where
+the modern arm also supports a 16 bit load/store (ldrh, strh).
+
+The wikipedia page has a link to scans of the old armv2 document:
+
+http://www.chiark.greenend.org.uk/~theom/riscos/docs/ARM3-datasheet_ARM-Family-Data-Manual-VLSI.pdf
+
+the amber project has done a pretty good job of recreating the important
+parts of that, in particular the instruction set:
+
+http://opencores.org/websvn,filedetails?repname=amber&path=%2Famber%2Ftrunk%2Fdoc%2Famber-spec.pdf
+
+
+The reason why I am so happy to find this is that every time I have
+shown a programmer what it is like to see their code executing in a
+simulation, being able to see all the memory accesses, registers, etc.
+They have enjoyed it and taken to it quickly as it can be addictive.
+Then negative side to it is that if you are working on a chip and
+spend that year or two in simulation, when the silicon arrives and you
+cant look inside you feel a bit lost for a while.  Sure, for things
+that you can simulate in a few million clock cycles, something that
+doesnt take forever or fill up the hard disk with the output, you can
+return to the simulator.
+
+For now I have started with the amber23 which uses a 3 stage pipeline
+and has a unified instruction and data cache.
+
+Now most folks that deal with making chips or fpgas have access to the
+pay-for tools like Modelsim.  Now there are ways to get eval or trial
+copies of these tools.  But there are a couple of free, open source tools
+that handle verilog.  One I like in particular is Verilator
+
+http://www.veripool.org/wiki/verilator
+
+Verilator, the way I am using here, generates C++ from the verilog.
+From which you can do a couple of things.  One is another thing I like
+to show folks, which is combining software with simulated hardware.
+There is no reason for the software teams to wait for silicon or for
+the pcboard to arrive to start writing code that talks to the hardware.
+
+At the momment I have software that attaches to the core at the
+memory interface known as wishbone bus.
+
+http://en.wikipedia.org/wiki/Wishbone_(computer_bus)
+
+Some day I may change that such that the memory/rom are in synthesizable
+verilog and the software connects to the hardware through a uart or
+debugger.
+
+The amber project has a number of peripherals, I have not included
+any of them.  I have defined my own memory space, which is very limited
+at the moment.  Rom starts at 0x00000000, and for now is 64Kbytes,
+ram starts at 0x40000000 and for now is 64KBytes.  I modified the amber
+processor to allow anything under 0x80000000 to be cacheable if the
+cache is enabled, leaving 0x80000000 and above for peripherals.
+
+So for these examples you are going to need two things first is
+verilator, second is a toolchain.
+
+Getting and installing verilator is described on their website:
+http://www.veripool.org/wiki/verilator/Installing
+
+Basically:
+
+git clone http://git.veripool.org/git/verilator   # Only first time
+cd verilator
+git pull        # Make sure we're up-to-date
+git tag         # See what versions exist
+autoconf        # Create ./configure script
+unsetenv VERILATOR_ROOT  # For csh; ignore error if on bash
+unset VERILATOR_ROOT  # For bash
+./configure
+make  # this can take a while
+make install
+
+There is a Makefile in the amber23 directory.  After getting, building
+and installing verilator, change to the amber23 directory and type
+make.
+
+The binary for now is amber23/obj_dir/Va23_core
+
+The binary expects an intel hex formatted file on the command line
+which includes the ARM2 binary to run.
+
+Any time if/when you change vmain.cpp you need to re-build that binary.
+
+The second thing you will need is a toolchain.  Eventually I will
+copy some instructions for making your own tools from the gnu sources,
+for now just go get the lite version of the code sourcery tools.
+
+http://www.codesourcery.com
+
+Mentor Graphics has bought/assimilated Code Sourcery but still offers
+the toolchain and the free lite version.  You may have to wander around
+a bit to find the lite version and probably give up an email address
+where they send you a link to the download.
+
+My samples are written such that no gcclib nor C library calls are used
+so it doesnt matter if you get the linux (arm-none-linux-gnueabi) or
+just eabi (arm-none-eabi) versions.  Modify the ARMGNU parameter
+in the Makefile or specify it as an environment variable.
+
+blinker01 is borrowed from another one of my samples where it blinks
+an led.  dont have gpio on this (yet) but it does serve as a starting
+point for seeing this thing in action.
+
+The amber spec document shows a little about running gtkwave, another
+open source tool that completes the package.  I have made the software
+that wraps around the hardware (vmain.cpp) with some peripherals that
+print stuff out so arguably you dont have to look at the internals
+of the chip to use this simulator.  Eventually I will make a version
+of vmain that does not produce a vcd file, to be used this way.
+
+With ubuntu or linux mint you can simply apt-get install gtkwave.  If you
+cant yum or apt-get or emerge gtkwave then just get the sources and build
+it.
+
+http://gtkwave.sourceforge.net/
+
+After you build the simluator Va23_core, build the blinker01 example
+blinker01.hex, then run Va23_core /path/to/blinker01.hex it will
+create a file named test.vcd.  Use gtkave to see what is going on
+
+gtkwave test.vcd
+
+A very quick crash course.  The top left area has an SST box that
+is like a file directory if you will of the chip design.  When you
+click on the word TOP, the lower left box now shows a list of signal
+names.  Click on one of them to highlight it then ctrl-a to highlight
+all of them then press the append button to add those signals to the
+main waveform window.
+
+The bulk of your time will be examining waveforms, these are internal
+signals, registers, and busses.  lets add two more things then talk
+about blinker01.  Now there have been subtle but steady improvements
+to gtkwave so depending on what version you have the controls are
+in the sample places but are a little more artsy as you get newer.
+So basically you want to expand the TOP level design which shows a
+v.  Expand that and you see u_coprocessor, u_decode, u_execute, and
+u_fetch.  Expand u_execute and select u_register_bank.  And you get
+a bunch of signals in the signal box below.  Another feature of gtkwave
+is in the filter box type in r2 and it should isolate 2 signals
+r2 and r2_out.  Select and add both of those.  You do have to remember
+to empty the filter box if/when you navigate somewhere else or want
+to see more of the signals in this space.
+
+Once you have the signals you want in the window the bulk of your time
+will be selecting events with single left mouse button clicks and then
+using the zoom in and zoom out controls, which are usually on the
+leftish side of the toolbar, and usually look like magnifying glasses
+but that is one thing that varies among gtkwave versions, the look of
+those icons.  You can also zoom in/out from the menu.  Depending on what
+I am doing I usually use the other zoom that is a zoom to fit, puts
+the whole sim across the window, then you might be able to see the
+event you are looking for, click on/near it and use the zoom in (+) to
+zoom in on the signals.  With this blinker01 sim, that doesnt show
+what we are looking for.  Instead zoom out a bit (-) until the o_wb_we
+signal has the handful of blips up front and then across the screen
+there are some spread out pretty wide.
+
+A feature of these kinds of waveform tools is you want to click to the
+left or right of an edge on the signal of interest and with practice
+you can get the tool to snap the highlight line to that edge.  If it
+is an edge you want to see, otherwise miss an edge and it will put the
+line where you clicked.  So click just to the left of one of those
+blips of o_wb_we and then zoom in until you can see the values in
+r2 and r2_out counting down as they approach that blip.
+
+if you look at the blinker01 code, there is a main loop where r2 counts
+from 0x30 down to 0x00 then a write happens to 0xFFFFF430 or 0xFFFFF434.
+
+So the next thing to do is zoom in a little more until you can read the
+numbers on the o_wb_adr signal.   And if you are in this main loop
+then it should be one of those addressses 0xFFFFF430 or 0xFFFFF434.
+
+The last thing in this crash course is there is a window between
+the signal selection stuff on the left, and the main waveform stuff
+on the right and most of the screen.  This is the list of signal names
+you are looking at, depending on how big your screen is and how these
+got spaced when you ran, you might need to use the slider at the bottom
+to show you that it shows you the values for those signals based on the
+cursor (vertical line in the waveform window) position.
+
+Okay one more thing.  We were looking at o_wb_we, if in that signals
+window you select o_wb_we then you can use the find next edge or find
+previous edge controls.  Like the zoom controls the icons differ from
+gtkwave to gtkwave, on mine they look like a left and right arrow, not
+the arrow with a line stop at the end but the set without.  You can go
+from one write (o_wb_we = 1) to the next and see the o_wb_addr chang
+between those two addresses.
+
+blinker02 demonstrates some byte accesses, it appears that this processor
+puts the same byte on all four lanes.  Some processors will put the
+byte in the same place no matter what the address is, for example the
+lower 8 data bits.  And some will put the byte in the byte lane based
+on the address, so if the lower two address bits are 0b01 then the
+byte to write will be in bits 15 to 8.  And sometimes the other bits
+are zero or sometimes the other bits are stale/garbage from some other
+transaction.  And the purpose of the blinker02 example was to figure
+out how this processor write bytes and the lane it uses to read from
+so that the software memory simulation (vmain.cpp) would work properly.
+
+hello_world is the first C example in this series.  And some of the
+peripherals I added come into play.  First off if you read or write
+address 0xF0000000 I stop the simulation.  Hardware runs forever until
+you turn it off.  You may not be doing anyting or seeing any changes
+on your screen, but you can be sure there is a lot going on with that
+processor.  Since this sim generates an output file test.vcd if you
+run forever it will fill up your disk with that file.  And make it
+too big to view with gktwave.  So to control that I created a way
+to stop/halt.  If you write to 0xE0000000 vmain.cpp will print out
+that value, a single write prints a hex value, you can also of course
+look for writes to 0xE0000000 in the sim to debug or watch your
+program run.  And I have made a uart like tx register, when you write
+to 0xD0000000 vmain.cpp will print the character in the lower 8 bits.
+Since this is not real hardware and doesnt have to spin a bunch of
+clocks to send that character you dont have a tx empty bit to
+poll on.  With real hardware or a simulation of real hardware you cant
+blast bytes to a uart this fast.
