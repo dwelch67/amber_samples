@@ -233,3 +233,69 @@ Since this is not real hardware and doesnt have to spin a bunch of
 clocks to send that character you dont have a tx empty bit to
 poll on.  With real hardware or a simulation of real hardware you cant
 blast bytes to a uart this fast.
+
+tea01.  So had to use the waveforms to debug a problem here.
+The original a23_decode.v had this
+always @*
+    casez ({instruction[27:20], instruction[7:4]})
+        12'b00010?001001 : itype = SWAP;
+        12'b000000??1001 : itype = MULT;
+        12'b00?????????? : itype = REGOP;
+        12'b01?????????? : itype = TRANS;
+        12'b100????????? : itype = MTRANS;
+        12'b101????????? : itype = BRANCH;
+        12'b110????????? : itype = CODTRANS;
+        12'b1110???????0 : itype = COREGOP;
+        12'b1110???????1 : itype = CORTRANS;
+        default:           itype = SWI;
+    endcase
+Which verilator didnt like, complained about duplicate case statements
+like 0x9 for example.  I tried this
+    casez ({instruction[27:20], instruction[7:4]})
+        12'b00010?001001 : itype = SWAP;
+        12'b000000??1001 : itype = MULT;
+        12'b00??????0??0 : itype = REGOP;
+        12'b00??????0??1 : itype = REGOP;
+        12'b00??????1??0 : itype = REGOP;
+        12'b01?????????? : itype = TRANS;
+        12'b100????????? : itype = MTRANS;
+        12'b101????????? : itype = BRANCH;
+        12'b110????????? : itype = CODTRANS;
+        12'b1110???????0 : itype = COREGOP;
+        12'b1110???????1 : itype = CORTRANS;
+        default:           itype = SWI;
+    endcase
+And it stopped complaining, but when it hit an orr instruction using
+registers or a certain mix of registers, it actually decodes as an swi
+which, I had not setup a full exception table so it started the
+program again, and again, and again. And this appears to be the problem
+with the verilog:
+    casez ({instruction[27:20], instruction[7:4]})
+        12'b00010?001001 : itype = SWAP;
+        12'b000000??1001 : itype = MULT;
+        12'b00??????0??0 : itype = REGOP;
+        12'b00??????0??1 : itype = REGOP;
+        12'b00??????1??0 : itype = REGOP;
+        12'b001?????1??1 : itype = REGOP;
+        12'b01?????????? : itype = TRANS;
+        12'b100????????? : itype = MTRANS;
+        12'b101????????? : itype = BRANCH;
+        12'b110????????? : itype = CODTRANS;
+        12'b1110???????0 : itype = COREGOP;
+        12'b1110???????1 : itype = CORTRANS;
+        default:           itype = SWI;
+    endcase
+I left an obvious case out.  The next problem is the 200000 cycles in
+vmain.cpp were not enough.  To run tea01 with a vcd output, you need to
+comment out the if(ticks>200000) line.  Now the stated goal was to show
+you how to look at your code in simulation, but I created another way
+to build the simulator that does not produce waveforms, for these more
+complicated and longer running programs.  Or programs that run
+infinitely. To build and use this alternate simulator in the amber23
+dir
+make -f Makefile.forever
+But this is very much like how you write software for a chip under
+development.  You simulate without the waveforms going, which greatly
+speeds up the simulation, and lets you run longer as you are not filling
+up disk space.  Then if you run into a problem you need to start
+debugging the problem by staring at waveforms.

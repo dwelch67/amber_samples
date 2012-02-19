@@ -22,7 +22,7 @@ _start:
 
 reset:
     mov sp,#0x40000000
-    add sp,sp,#0x4000
+    add sp,sp,#0x10000
 
     bl notmain
 
