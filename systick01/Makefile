@@ -5,7 +5,7 @@ ARMGNU ?= arm-none-eabi
 COPS = -Wall -O2 -nostdlib -nostartfiles -ffreestanding -mcpu=arm2 -mtune=arm2 -march=armv2a -mno-thumb-interwork
 AOPS = --warn  -mcpu=arm2 -march=armv2a
 
-all : hello_world.hex
+all : systick01.hex
 
 clean :
 	rm -f *.o
@@ -18,16 +18,16 @@ clean :
 vectors.o : vectors.s
 	$(ARMGNU)-as $(AOPS) vectors.s -o vectors.o
 
-hello_world.o : hello_world.c
-	$(ARMGNU)-gcc $(COPS) -c hello_world.c -o hello_world.o
+systick01.o : systick01.c
+	$(ARMGNU)-gcc $(COPS) -c systick01.c -o systick01.o
 
 uart.o : uart.c
 	$(ARMGNU)-gcc $(COPS) -c uart.c -o uart.o
 
-hello_world.hex : memmap vectors.o uart.o hello_world.o 
-	$(ARMGNU)-ld vectors.o hello_world.o uart.o -T memmap -o hello_world.elf
-	$(ARMGNU)-objdump -D hello_world.elf > hello_world.list
-	$(ARMGNU)-objcopy hello_world.elf -O ihex hello_world.hex
+systick01.hex : memmap vectors.o uart.o systick01.o 
+	$(ARMGNU)-ld vectors.o systick01.o uart.o -T memmap -o systick01.elf
+	$(ARMGNU)-objdump -D systick01.elf > systick01.list
+	$(ARMGNU)-objcopy systick01.elf -O ihex systick01.hex
 
 
 

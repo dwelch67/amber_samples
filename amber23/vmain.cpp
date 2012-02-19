@@ -150,11 +150,12 @@ unsigned char t;
 
 int main(int argc, char *argv[])
 {
+
     unsigned int tick;
-    int ret;
     unsigned int addr;
     unsigned int mask;
     unsigned int simhalt;
+    unsigned int did_reset;
 
     FILE *fp;
 
@@ -189,19 +190,16 @@ int main(int argc, char *argv[])
 
     top->i_system_rdy = 0;
     simhalt=0;
+    did_reset=0;
     while (!Verilated::gotFinish())
     {
 
         top->i_wb_dat=0;
         top->i_wb_ack=0;
 
-
         tick++;
-        if (tick > 11)
+        if(did_reset)
         {
-            top->i_system_rdy = 1;
-
-
             if(top->o_wb_cyc)
             {
                 if(top->o_wb_cyc)
@@ -275,6 +273,20 @@ int main(int argc, char *argv[])
                                             }
                                         }
                                     }
+                                    if(addr==0xD1000000)
+                                    {
+                                        if(top->o_wb_we)
+                                        {
+                                            if((tick&1)==0)
+                                            {
+                                                printf("cant write or change timer tick\n");
+                                            }
+                                        }
+                                        else
+                                        {
+                                            top->i_wb_dat=tick;
+                                        }
+                                    }
                                     if(addr==0xE0000000)
                                     {
                                         if(top->o_wb_we)
@@ -296,10 +308,17 @@ int main(int argc, char *argv[])
                     }
                 }
             }
+
+        }
+        else
+        {
+            if (tick > 11)
+            {
+                top->i_system_rdy = 1;
+                did_reset = 1;
+            }
         }
         top->i_clk = (tick & 1);
-
-
         top->eval();
 #if VM_TRACE
         trace->dump(tick);

@@ -1,0 +1,15 @@
+
+Added a systick continuous timer to the virtual hardware.  Which takes
+snapshots of a timer variable used in the simulation.  Reading from
+address 0xD1000000 gets you a snapshot of this timer.
+
+This example is for looking at waveforms with.  Run the sim and look
+at the waveforms, if you look at the top level signals and zoom to
+fit on your screen you will see the o_wb_we signal have a bunch
+of relatively narrow spaced pulses, three lone ones and then 10
+wider spaced.  If you look at the code there are some writes for the
+stack when enterning notmain then the 10 writes to 0xE0000000 as fast
+as the code will do it.  Then I print the timer count three times
+to get a feel for how many ticks for that code.  Then go into a loop
+that uses this timer tick to space out the writes to 0xE0000000, which
+you can see is happening.
