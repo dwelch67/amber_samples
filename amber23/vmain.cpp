@@ -8,7 +8,9 @@
 #include "Va23_core.h"
 
 Va23_core *top;
+#if VM_TRACE
 VerilatedVcdC *trace;
+#endif
 
 
 
@@ -173,15 +175,17 @@ int main(int argc, char *argv[])
     fclose(fp);
 
 
-
+#if VM_TRACE
     Verilated::traceEverOn(true);
+#endif
 
     top = new Va23_core;
 
+#if VM_TRACE
     trace = new VerilatedVcdC;
-
     top->trace(trace, 99);
     trace->open("test.vcd");
+#endif
 
     top->i_system_rdy = 0;
     simhalt=0;
@@ -297,12 +301,15 @@ int main(int argc, char *argv[])
 
 
         top->eval();
+#if VM_TRACE
         trace->dump(tick);
-
         if(tick>200000) break;
+#endif
         if(simhalt) break;
     }
+#if VM_TRACE
     trace->close();
+#endif
     top->final();
     return 0;
 }

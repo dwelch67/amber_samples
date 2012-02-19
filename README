@@ -8,14 +8,15 @@ You can see from the description that it is an armv2 compatible processor
 which is the predecessor to the ARM family of processors that is in
 many of the electronic devices we use on a daily basis.
 
-You can definitely see the similarities and differences.  The memory
-space is smaller.   The program counter is very different, flags and
-mode are part of the program counter in an arm2, the armv4 and newer
-that we are used to has separate place to store this information leaving
-almost all of the program counter to be address (the lsbit indicates
-thumb mode vs arm mode).  Another noticeable difference is the armv2
-only supports 32 bit and 8 bit accesses (ldr, ldrb, str, strb) where
-the modern arm also supports a 16 bit load/store (ldrh, strh).
+You can definitely see the similarities and a few differences.  The
+program memory space is smaller.   The program counter is very different,
+flags and mode are part of the program counter in an arm2 (making the
+program space smaller), the armv4 and newer that we are used now, have a
+separate place to store this information leaving almost all of the
+program counter to be address (the lsbit indicates thumb mode vs arm
+mode).  Another noticeable difference is the armv2 only supports 32 bit
+and 8 bit accesses (ldr, ldrb, str, strb) where the modern arm also
+supports a 16 bit load/store (ldrh, strh).
 
 The wikipedia page has a link to scans of the old armv2 document:
 
@@ -25,7 +26,6 @@ the amber project has done a pretty good job of recreating the important
 parts of that, in particular the instruction set:
 
 http://opencores.org/websvn,filedetails?repname=amber&path=%2Famber%2Ftrunk%2Fdoc%2Famber-spec.pdf
-
 
 The reason why I am so happy to find this is that every time I have
 shown a programmer what it is like to see their code executing in a
@@ -37,6 +37,14 @@ cant look inside you feel a bit lost for a while.  Sure, for things
 that you can simulate in a few million clock cycles, something that
 doesnt take forever or fill up the hard disk with the output, you can
 return to the simulator.
+
+No different here, for short programs that do not produce a huge waveform
+file or take forever to simulate, you simulate with the waveforms
+turned on and can examine what is going on, when the programs start to
+have some length to them, it becomes too painful to output waveforms
+for all of it so you have to use some simulation tricks to only
+show part of the sim in waveforms or use other ways of looking at what
+is going on.
 
 For now I have started with the amber23 which uses a 3 stage pipeline
 and has a unified instruction and data cache.
@@ -287,15 +295,9 @@ with the verilog:
     endcase
 I left an obvious case out.  The next problem is the 200000 cycles in
 vmain.cpp were not enough.  To run tea01 with a vcd output, you need to
-comment out the if(ticks>200000) line.  Now the stated goal was to show
-you how to look at your code in simulation, but I created another way
-to build the simulator that does not produce waveforms, for these more
-complicated and longer running programs.  Or programs that run
-infinitely. To build and use this alternate simulator in the amber23
-dir
+comment out the if(ticks>200000) line.  For running programs that are
+big/long enough that the sim is slow and waveform file starts to get
+large, I have an alternate build for the simulator
 make -f Makefile.forever
-But this is very much like how you write software for a chip under
-development.  You simulate without the waveforms going, which greatly
-speeds up the simulation, and lets you run longer as you are not filling
-up disk space.  Then if you run into a problem you need to start
-debugging the problem by staring at waveforms.
+It sims faster, does not stop until you stop it with a write to 0xF0000000
+and does not produce waveforms.

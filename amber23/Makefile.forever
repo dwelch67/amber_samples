@@ -17,9 +17,9 @@ VERILOG_FILES = \
 	generic_sram_byte_en.v \
 	generic_sram_line_en.v
 
-obj_dir/Va23_core : vforever.cpp $(VERILOG_FILES)
-	verilator --cc a23_core.v --exe vforever.cpp
-	make -C obj_dir/ -f Va23_core.mk
+obj_dir/Va23_core : vmain.cpp $(VERILOG_FILES)
+	verilator --cc a23_core.v --exe vmain.cpp
+	NO_VCD_TRACE=1; make -C obj_dir/ -f Va23_core.mk
 
 clean :
 	rm -rf obj_dir
