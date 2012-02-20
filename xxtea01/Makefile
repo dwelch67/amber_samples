@@ -2,7 +2,7 @@
 #ARMGNU ?= arm-none-linux-gnueabi
 ARMGNU ?= arm-none-eabi
 
-COPS = -Wall -O1 -nostdlib -nostartfiles -ffreestanding -mcpu=arm2 -mtune=arm2 -march=armv2a -mno-thumb-interwork
+COPS = -Wall -O2 -nostdlib -nostartfiles -ffreestanding -mcpu=arm2 -mtune=arm2 -march=armv2a -mno-thumb-interwork
 AOPS = --warn  -mcpu=arm2 -march=armv2a
 
 all : xxtea01.hex
