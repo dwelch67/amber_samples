@@ -1,0 +1,44 @@
+
+The top level README has a crash course in using gtkwave to look at
+vcd wave files.
+
+This is a crash course in looking at code executing in a pipelined
+processor.  This assumes you are using the amber23 simulation.  Note
+the amber-spec talks about pipelining as well, you should read it.
+
+Now ARM manuals will talk about the program counter being two instructions
+ahead.  This ARM appears to do that.  Whenever you see a branch
+happen, it will fetch three instructions, the destination of the
+branch, and the next two that follow, two instructions ahead.  Then
+it will execute the current instruction.
+
+An example of this in this blinker01 example
+
+   0:   e3a0d101    mov sp, #1073741824 ; 0x40000000
+   4:   e28dd901    add sp, sp, #16384  ; 0x4000
+   8:   e59f004c    ldr r0, [pc, #76]   ; 5c <hang+0x4>
+   c:   e3a01004    mov r1, #4
+  10:   e5801000    str r1, [r0]
+
+The third instruction
+
+   8:   e59f004c    ldr r0, [pc, #76]   ; 5c <hang+0x4>
+
+Is going to cause a read of address 0x5C.  If you look at the waveforms
+though you see reads/fetches of address 0x00, 0x04, 0x08, 0x0C and 0x10
+THEN you see the read caused by the instruction at 0x08, a read of
+0x5C.  This can get very confusing if you let yourself think the processor
+is executing instruction 0x10 when it performs that read.
+
+It helps a little (maybe) if you navigate through the design in gtkwave
+to TOP.v.u_execute.u_register_bank.r15.  This is obviously (when you
+see it) not the program counter as described by the arm2/amber spec
+this is basically the word address bits in the middle of the program
+counter.  You need to multiply the number in this register by 4 to get
+a byte address that you can compare to the fetches or to the disassembly
+of your program.  Also TOP.v.u_decode.instruction and instruction_address
+may also help to see what is going on.
+
+With the o_wb_we that kinda stands out, sprinkling writes around can
+help to figure out where you are in your code and what is going on.
+
