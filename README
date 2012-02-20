@@ -307,3 +307,9 @@ working (with verilator) and failed, so I chucked it, if you try to
 turn it on, it doesnt do anything you keep on running without.  Maybe
 someday I will add it back.  Maybe amber25 with separate caches will
 "just work" with verilator.
+
+Amber25 is more complicated to be sure, and verilator didnt like the
+cache there either, so I removed it but not completely, needs more
+surgery to be completely removed.  The memory system on amber25 is an
+128 bit wide data bus, I think I have it working but prefer the bus on
+amber23.
