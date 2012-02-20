@@ -148,6 +148,23 @@ unsigned char t;
 
 }
 
+
+void write_ram ( unsigned int addr, unsigned int data, unsigned int mask )
+{
+    //printf("write_ram(0x%08X,0x%08X,0x%08X)\n",addr,data,mask);
+    if(mask==0xFFFFFFFF)
+    {
+        ram[addr>>2]=data;
+    }
+    else
+    {
+        ram[addr>>2]&=~mask;
+        ram[addr>>2]|=mask&data;
+    }
+}
+
+
+
 int main(int argc, char *argv[])
 {
     unsigned int lasttick;
@@ -237,18 +254,19 @@ int main(int argc, char *argv[])
                                 if(top->o_wb_sel==0xFFFF)
                                 {
                                     //all lanes on, just write
-                                    ram[((addr>>4)<<2)+0]=top->o_wb_dat[0];
-                                    ram[((addr>>4)<<2)+1]=top->o_wb_dat[1];
-                                    ram[((addr>>4)<<2)+2]=top->o_wb_dat[2];
-                                    ram[((addr>>4)<<2)+3]=top->o_wb_dat[3];
+                                    write_ram(addr+0x0,top->o_wb_dat[0],0xFFFFFFFF);
+                                    write_ram(addr+0x4,top->o_wb_dat[1],0xFFFFFFFF);
+                                    write_ram(addr+0x8,top->o_wb_dat[2],0xFFFFFFFF);
+                                    write_ram(addr+0xC,top->o_wb_dat[3],0xFFFFFFFF);
                                 }
                                 else
                                 {
                                     if(top->o_wb_sel&0x000F)
                                     {
+if(top->o_wb_sel&0xFFF0) printf("unexpected mask\n");
                                         if((top->o_wb_sel&0x000F)==0x000F)
                                         {
-                                            ram[((addr>>4)<<2)+0]|=top->o_wb_dat[0];
+                                            write_ram(addr,top->o_wb_dat[0],0xFFFFFFFF);
                                         }
                                         else
                                         {
@@ -257,15 +275,15 @@ int main(int argc, char *argv[])
                                             if(top->o_wb_sel&(2<<0)) mask|=0x0000FF00;
                                             if(top->o_wb_sel&(4<<0)) mask|=0x00FF0000;
                                             if(top->o_wb_sel&(8<<0)) mask|=0xFF000000;
-                                            ram[((addr>>4)<<2)+0]&=~mask;
-                                            ram[((addr>>4)<<2)+0]|=mask&top->o_wb_dat[0];
+                                            write_ram(addr,top->o_wb_dat[0],mask);
                                         }
                                     }
                                     if(top->o_wb_sel&0x00F0)
                                     {
+if(top->o_wb_sel&0xFF0F) printf("unexpected mask\n");
                                         if((top->o_wb_sel&0x00F0)==0x00F0)
                                         {
-                                            ram[((addr>>4)<<2)+1]|=top->o_wb_dat[1];
+                                            write_ram(addr,top->o_wb_dat[1],0xFFFFFFFF);
                                         }
                                         else
                                         {
@@ -274,15 +292,15 @@ int main(int argc, char *argv[])
                                             if(top->o_wb_sel&(2<<4)) mask|=0x0000FF00;
                                             if(top->o_wb_sel&(4<<4)) mask|=0x00FF0000;
                                             if(top->o_wb_sel&(8<<4)) mask|=0xFF000000;
-                                            ram[((addr>>4)<<2)+1]&=~mask;
-                                            ram[((addr>>4)<<2)+1]|=mask&top->o_wb_dat[1];
+                                            write_ram(addr,top->o_wb_dat[1],mask);
                                         }
                                     }
                                     if(top->o_wb_sel&0x0F00)
                                     {
+if(top->o_wb_sel&0xF0FF) printf("unexpected mask\n");
                                         if((top->o_wb_sel&0x0F00)==0x0F00)
                                         {
-                                            ram[((addr>>4)<<2)+2]|=top->o_wb_dat[2];
+                                            write_ram(addr,top->o_wb_dat[2],0xFFFFFFFF);
                                         }
                                         else
                                         {
@@ -291,15 +309,15 @@ int main(int argc, char *argv[])
                                             if(top->o_wb_sel&(2<<8)) mask|=0x0000FF00;
                                             if(top->o_wb_sel&(4<<8)) mask|=0x00FF0000;
                                             if(top->o_wb_sel&(8<<8)) mask|=0xFF000000;
-                                            ram[((addr>>4)<<2)+2]&=~mask;
-                                            ram[((addr>>4)<<2)+2]|=mask&top->o_wb_dat[2];
+                                            write_ram(addr,top->o_wb_dat[2],mask);
                                         }
                                     }
                                     if(top->o_wb_sel&0xF000)
                                     {
+if(top->o_wb_sel&0x0FFF) printf("unexpected mask\n");
                                         if((top->o_wb_sel&0xF000)==0xF000)
                                         {
-                                            ram[((addr>>4)<<2)+3]|=top->o_wb_dat[3];
+                                            write_ram(addr,top->o_wb_dat[3],0xFFFFFFFF);
                                         }
                                         else
                                         {
@@ -308,8 +326,7 @@ int main(int argc, char *argv[])
                                             if(top->o_wb_sel&(2<<12)) mask|=0x0000FF00;
                                             if(top->o_wb_sel&(4<<12)) mask|=0x00FF0000;
                                             if(top->o_wb_sel&(8<<12)) mask|=0xFF000000;
-                                            ram[((addr>>4)<<2)+3]&=~mask;
-                                            ram[((addr>>4)<<2)+3]|=mask&top->o_wb_dat[3];
+                                            write_ram(addr,top->o_wb_dat[3],mask);
                                         }
                                     }
                                 }
@@ -332,17 +349,17 @@ int main(int argc, char *argv[])
                     {
 
 
-                        ////peripherals
-                        //if(addr==0xD0000000)
-                        //{
-                            //if(top->o_wb_we)
-                            //{
-                                //if((tick&1)==0)
-                                //{
-                                    //printf("%c",top->o_wb_dat&0xFF);
-                                //}
-                            //}
-                        //}
+                        //peripherals
+                        if(addr==0xD0000000)
+                        {
+                            if(top->o_wb_we)
+                            {
+                                if((tick&1)==0)
+                                {
+                                    printf("%c",top->o_wb_dat[0]&0xFF);
+                                }
+                            }
+                        }
                         if(addr==0xD1000000)
                         {
                             if(top->o_wb_we)
@@ -392,7 +409,7 @@ int main(int argc, char *argv[])
         top->eval();
 #if VM_TRACE
         trace->dump(tick);
-        if(tick>20000) break;
+        if(tick>200000) break;
 #endif
         if(simhalt) break;
     }
