@@ -86,7 +86,7 @@ input                       i_wb_err
 );
 
 
-localparam [3:0] WB_IDLE            = 3'd0,
+localparam [2:0] WB_IDLE            = 3'd0,
                  WB_BURST1          = 3'd1,
                  WB_BURST2          = 3'd2,
                  WB_BURST3          = 3'd3,
@@ -279,6 +279,11 @@ always @( posedge i_clk )
                 o_wb_we             <= 1'd0;
                 servicing_cache     <= 1'd0;
                 end
+
+            default:
+                begin
+                end
+
 
     endcase
 

@@ -52,7 +52,7 @@ input      [DATA_WIDTH-1:0]     i_write_data,
 input                           i_write_enable,
 input      [ADDRESS_WIDTH-1:0]  i_address,
 output reg [DATA_WIDTH-1:0]     o_read_data
-);                                                     
+);
 
 reg [DATA_WIDTH-1:0]   mem  [0:2**ADDRESS_WIDTH-1];
 
@@ -62,12 +62,12 @@ integer i;
 initial
     begin
     for (i=0;i<2**ADDRESS_WIDTH;i=i+1)
-        mem[i] <= 'd0;
+        mem[i] = 'd0;
     end
 end
 endgenerate
 
-    
+
 always @(posedge i_clk)
     begin
     // read
@@ -77,8 +77,8 @@ always @(posedge i_clk)
     if (i_write_enable)
         mem[i_address] <= i_write_data;
     end
-    
-    
+
+
 
 endmodule
 

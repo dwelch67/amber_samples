@@ -150,7 +150,7 @@ wire [1:0]          status_bits_mode_nxt;
 reg  [1:0]          status_bits_mode = SVC;
                     // one-hot encoded rs select
 wire [3:0]          status_bits_mode_rds_oh_nxt;
-reg  [3:0]          status_bits_mode_rds_oh = 1'd1 << OH_SVC;
+reg  [3:0]          status_bits_mode_rds_oh = 1 << OH_SVC;
 wire                status_bits_mode_rds_oh_update;
 wire                status_bits_irq_mask_nxt;
 reg                 status_bits_irq_mask = 1'd1;
@@ -219,7 +219,7 @@ assign status_bits_mode_nxt      = i_status_bits_sel == 3'd0 ? i_status_bits_mod
 // so its really part of the decode stage even though the logic is right here
 // In addition the signal is one-hot encoded to further speed up the logic
 
-assign status_bits_mode_rds_oh_nxt    = i_user_mode_regs_store_nxt ? 1'd1 << OH_USR                            :
+assign status_bits_mode_rds_oh_nxt    = i_user_mode_regs_store_nxt ? 1 << OH_USR                            :
                                         status_bits_mode_update    ? oh_status_bits_mode(status_bits_mode_nxt) :
                                                                      oh_status_bits_mode(status_bits_mode)     ;
 

@@ -40,7 +40,7 @@
 
 
 // ========================================================
-// PC Filter - Remove the status bits 
+// PC Filter - Remove the status bits
 // ========================================================
 function [31:0] pcf;
 input [31:0] pc_reg;
@@ -84,29 +84,13 @@ endfunction
 function [3:0] oh_status_bits_mode;
 input [1:0] fn_status_bits_mode;
 begin
-oh_status_bits_mode = 
-    fn_status_bits_mode == SVC  ? 1'd1 << OH_SVC  :
-    fn_status_bits_mode == IRQ  ? 1'd1 << OH_IRQ  :
-    fn_status_bits_mode == FIRQ ? 1'd1 << OH_FIRQ :
-                                  1'd1 << OH_USR  ;
+oh_status_bits_mode =
+    fn_status_bits_mode == SVC  ? 1 << OH_SVC  :
+    fn_status_bits_mode == IRQ  ? 1 << OH_IRQ  :
+    fn_status_bits_mode == FIRQ ? 1 << OH_FIRQ :
+                                  1 << OH_USR  ;
 end
 endfunction
-
-// ========================================================
-// Convert mode into ascii name
-// ========================================================
-function [(14*8)-1:0]  mode_name;
-input [4:0] mode;
-begin
-
-mode_name    = mode == USR  ? "User          " :
-               mode == SVC  ? "Supervisor    " :
-               mode == IRQ  ? "Interrupt     " :
-               mode == FIRQ ? "Fast Interrupt" :
-                              "UNKNOWN       " ;
-end
-endfunction
-
 
 // ========================================================
 // Conditional Execution Function
@@ -132,7 +116,7 @@ function conditional_execute;
 input [3:0] condition;
 input [3:0] flags;
 begin
-conditional_execute  
+conditional_execute
                = ( condition == AL                                        ) ||
                  ( condition == EQ  &&  flags[2]                          ) ||
                  ( condition == NE  && !flags[2]                          ) ||
@@ -142,16 +126,16 @@ conditional_execute
                  ( condition == PL  && !flags[3]                          ) ||
                  ( condition == VS  &&  flags[0]                          ) ||
                  ( condition == VC  && !flags[0]                          ) ||
-            
+
                  ( condition == HI  &&    flags[1] && !flags[2]           ) ||
                  ( condition == LS  &&  (!flags[1] ||  flags[2])          ) ||
-            
+
                  ( condition == GE  &&  flags[3] == flags[0]              ) ||
                  ( condition == LT  &&  flags[3] != flags[0]              ) ||
 
                  ( condition == GT  &&  !flags[2] && flags[3] == flags[0] ) ||
                  ( condition == LE  &&  (flags[2] || flags[3] != flags[0])) ;
-            
+
 end
 endfunction
 

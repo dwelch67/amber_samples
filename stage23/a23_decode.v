@@ -62,8 +62,8 @@ input                       i_multiply_done,                // multiply unit is 
 // --------------------------------------------------
 // Control signals to execute stage
 // --------------------------------------------------
-output reg  [31:0]          o_read_data = 1'd0,
-output reg  [4:0]           o_read_data_alignment = 1'd0,  // 2 LSBs of read address used for calculating shift in LDRB ops
+output reg  [31:0]          o_read_data = 'd0,
+output reg  [4:0]           o_read_data_alignment = 'd0,  // 2 LSBs of read address used for calculating shift in LDRB ops
 
 output reg  [31:0]          o_imm32 = 'd0,
 output reg  [4:0]           o_imm_shift_amount = 'd0,
@@ -365,7 +365,9 @@ always @*
     casez ({instruction[27:20], instruction[7:4]})
         12'b00010?001001 : itype = SWAP;
         12'b000000??1001 : itype = MULT;
-        12'b00?????????? : itype = REGOP;
+        12'b00??????0??0 : itype = REGOP;
+        12'b00??????0??1 : itype = REGOP;
+        12'b001?????1??1 : itype = REGOP;
         12'b01?????????? : itype = TRANS;
         12'b100????????? : itype = MTRANS;
         12'b101????????? : itype = BRANCH;
@@ -826,7 +828,7 @@ always @*
             // (that is, it has the base in the transfer list), the overwriting is prevented.
             // This is true even when the abort occurs after the base word gets loaded
             restore_base_address_nxt        = instruction[20] &&
-                                                (instruction[15:0] & (1'd1 << instruction[19:16]));
+                                                (instruction[{1'b0,instruction[19:16]}]);
 
             // Increment or Decrement
             if ( instruction[23] ) // increment

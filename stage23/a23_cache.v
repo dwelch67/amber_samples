@@ -43,7 +43,6 @@
 //                                                              //
 //////////////////////////////////////////////////////////////////
 
-`include "a23_config_defines.v"
 
 module a23_cache
 #(
@@ -63,7 +62,7 @@ parameter CACHE_WORDS_PER_LINE = 4,
 //   2 ways -> 8KB  cache
 //   4 ways -> 16KB cache
 //   8 ways -> 32KB cache
-parameter WAYS              = `A23_CACHE_WAYS ,
+parameter WAYS              = 4,
 
 // derived configuration parameters
 parameter CACHE_ADDR_WIDTH  = log2 ( CACHE_LINES ),                        // = 8
@@ -128,7 +127,7 @@ localparam [3:0] CS_INIT            = 4'd0,
 
 
 reg  [3:0]                  c_state    = CS_IDLE;
-reg  [C_STATES-1:0]         source_sel = 1'd1 << C_CORE;
+reg  [C_STATES-1:0]         source_sel = 1 << C_CORE;
 reg  [CACHE_ADDR_WIDTH:0]   init_count = 'd0;
 
 wire [TAG_WIDTH-1:0]        tag_rdata_way [WAYS-1:0];
@@ -221,7 +220,7 @@ always @ ( posedge i_clk )
     if ( i_cache_flush )
         begin
         c_state     <= C_INIT;
-        source_sel  <= 1'd1 << C_INIT;
+        source_sel  <= 1 << C_INIT;
         init_count  <= 'd0;
         `ifdef A23_CACHE_DEBUG
         `TB_DEBUG_MESSAGE
@@ -234,23 +233,23 @@ always @ ( posedge i_clk )
                 if ( init_count < CACHE_LINES [CACHE_ADDR_WIDTH:0] )
                     begin
                     init_count  <= init_count + 1'd1;
-                    source_sel  <= 1'd1 << C_INIT;
+                    source_sel  <= 1 << C_INIT;
                     end
                 else
                     begin
-                    source_sel  <= 1'd1 << C_CORE;
+                    source_sel  <= 1 << C_CORE;
                     c_state     <= CS_TURN_AROUND;
                     end
 
              CS_IDLE :
                 begin
-                source_sel  <= 1'd1 << C_CORE;
+                source_sel  <= 1 << C_CORE;
 
                 if ( ex_read_hit || ex_read_hit_r )
                     begin
                     select_way  <= data_hit_way | ex_read_hit_way;
                     c_state     <= CS_EX_DELETE;
-                    source_sel  <= 1'd1 << C_INVA;
+                    source_sel  <= 1 << C_INVA;
                     end
                 else if ( read_miss )
                     begin
@@ -291,7 +290,7 @@ always @ ( posedge i_clk )
                 if ( !i_wb_stall )
                     begin
                     c_state     <= CS_FILL_COMPLETE;
-                    source_sel  <= 1'd1 << C_FILL;
+                    source_sel  <= 1 << C_FILL;
 
                     // Pick a way to write the cache update into
                     // Either pick one of the invalid caches, or if all are valid, then pick
@@ -313,7 +312,7 @@ always @ ( posedge i_clk )
                     // use physical address for first read as
                     // address moved before the stall was asserted for the read_miss
                     // However don't use it if its a non-cached address!
-                    source_sel  <= 1'd1 << C_CORE;
+                    source_sel  <= 1 << C_CORE;
                     c_state     <= CS_TURN_AROUND;
                     end
 
@@ -334,7 +333,7 @@ always @ ( posedge i_clk )
                 $display("Cache deleted Locked entry");
                 `endif
                 c_state    <= CS_TURN_AROUND;
-                source_sel <= 1'd1 << C_CORE;
+                source_sel <= 1 << C_CORE;
                 end
 
 
@@ -345,6 +344,11 @@ always @ ( posedge i_clk )
                     c_state     <= CS_IDLE;
 
                 end
+
+              default:
+                    begin
+                    end
+
         endcase
 
 

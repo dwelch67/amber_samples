@@ -125,6 +125,9 @@ always @ ( posedge i_clk )
                 4'd3: cacheable_area  <= i_copro_write_data[31:0];
                 4'd4: updateable_area <= i_copro_write_data[31:0];
                 4'd5: disruptive_area <= i_copro_write_data[31:0];
+                default:
+                    begin
+                    end
             endcase
         end
 
