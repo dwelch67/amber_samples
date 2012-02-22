@@ -41,19 +41,18 @@
 //                                                              //
 //////////////////////////////////////////////////////////////////
 
-`include "a25_config_defines.v"
 
-module a25_icache 
+module a25_icache
 #(
 
 // ---------------------------------------------------------
 // Cache Configuration
 
 // Limited to Linux 4k page sizes -> 256 lines
-parameter CACHE_LINES          = 256,  
+parameter CACHE_LINES          = 256,
 
 // This cannot be changed without some major surgeory on
-// this module                                       
+// this module
 parameter CACHE_WORDS_PER_LINE = 4,
 
 // Changing this parameter is the recommended
@@ -61,7 +60,7 @@ parameter CACHE_WORDS_PER_LINE = 4,
 //   2 ways -> 8KB  cache
 //   4 ways -> 16KB cache
 //   8 ways -> 32KB cache
-parameter WAYS              = `A25_ICACHE_WAYS ,
+parameter WAYS              = 4,
 
 // derived configuration parameters
 parameter CACHE_ADDR_WIDTH  = log2 ( CACHE_LINES ),                        // = 8
@@ -90,11 +89,11 @@ input      [31:0]                   i_address_nxt,      // un-registered version
 input                               i_cache_enable,     // from co-processor 15 configuration register
 input                               i_cache_flush,      // from co-processor 15 register
 
-output     [127:0]                  o_read_data,                                                       
+output     [127:0]                  o_read_data,
 
-// WB Read Request                                                          
+// WB Read Request
 output                              o_wb_req,          // Read Request
-input      [127:0]                  i_wb_read_data,                 
+input      [127:0]                  i_wb_read_data,
 input                               i_wb_ready
 );
 
@@ -107,7 +106,7 @@ localparam       C_INIT   = 0,
                  C_FILL   = 2,
                  C_INVA   = 3,
                  C_STATES = 4;
-                 
+
 localparam [3:0] CS_INIT            = 4'd0,
                  CS_IDLE            = 4'd1,
                  CS_FILL0           = 4'd2,
@@ -119,12 +118,12 @@ localparam [3:0] CS_INIT            = 4'd0,
                  CS_TURN_AROUND     = 4'd8,
                  CS_WRITE_HIT1      = 4'd9,
                  CS_EX_DELETE       = 4'd10;
-                 
+
 
 reg  [3:0]                  c_state    = CS_IDLE;
-reg  [C_STATES-1:0]         source_sel = 1'd1 << C_CORE;
+reg  [C_STATES-1:0]         source_sel = 1 << C_CORE;
 reg  [CACHE_ADDR_WIDTH:0]   init_count = 'd0;
-                 
+
 wire [TAG_WIDTH-1:0]        tag_rdata_way [WAYS-1:0];
 wire [CACHE_LINE_WIDTH-1:0] data_rdata_way[WAYS-1:0];
 wire [WAYS-1:0]             data_wenable_way;
@@ -174,8 +173,8 @@ genvar                      i;
 // If currently stalled then the address for the next
 // cycle will be the same as it is in the current cycle
 //
-assign address_c = i_core_stall ? i_address    : 
-                                  i_address_nxt; 
+assign address_c = i_core_stall ? i_address    :
+                                  i_address_nxt;
 
 assign address   = address_c[CACHE_ADDR32_MSB:CACHE_ADDR32_LSB];
 
@@ -183,7 +182,7 @@ assign address   = address_c[CACHE_ADDR32_MSB:CACHE_ADDR32_LSB];
 // ======================================
 // Outputs
 // ======================================
-assign o_read_data      = wb_hit       ? i_wb_read_data  : 
+assign o_read_data      = wb_hit       ? i_wb_read_data  :
                           read_buf_hit ? read_buf_data_r :
                                          hit_rdata ;
 
@@ -191,7 +190,7 @@ assign o_read_data      = wb_hit       ? i_wb_read_data  :
 // Don't allow the cache to stall the wb i/f for an exclusive access
 // The cache needs a couple of cycles to flush a potential copy of the exclusive
 // address, but the wb can do the access in parallel. So there is no
-// stall in the state CS_EX_DELETE, even though the cache is out of action. 
+// stall in the state CS_EX_DELETE, even though the cache is out of action.
 // This works fine as long as the wb is stalling the core
 assign o_stall          = read_stall  || cache_busy_stall;
 
@@ -212,10 +211,10 @@ always@(posedge i_clk)
         end
     else if (o_wb_req)
         read_buf_valid_r <= 1'd0;
-    
-    
+
+
 assign read_buf_hit     = read_buf_valid_r && i_address[31:4] == read_buf_addr_r[31:4];
-     
+
 // ======================================
 // Cache State Machine
 // ======================================
@@ -225,74 +224,79 @@ always @ ( posedge i_clk )
     if ( i_cache_flush )
         begin
         c_state     <= CS_INIT;
-        source_sel  <= 1'd1 << C_INIT;
+        source_sel  <= 1 << C_INIT;
         init_count  <= 'd0;
-        `ifdef A25_CACHE_DEBUG  
-        `TB_DEBUG_MESSAGE  
+        `ifdef A25_CACHE_DEBUG
+        `TB_DEBUG_MESSAGE
         $display("Cache Flush");
-        `endif            
+        `endif
         end
-    else    
+    else
         case ( c_state )
             CS_INIT :
                 if ( init_count < CACHE_LINES [CACHE_ADDR_WIDTH:0] )
                     begin
                     init_count  <= init_count + 1'd1;
-                    source_sel  <= 1'd1 << C_INIT;
+                    source_sel  <= 1 << C_INIT;
                     end
                 else
                     begin
-                    source_sel  <= 1'd1 << C_CORE;
+                    source_sel  <= 1 << C_CORE;
                     c_state     <= CS_TURN_AROUND;
-                    end 
-                       
+                    end
+
              CS_IDLE :
                 begin
-                source_sel  <= 1'd1 << C_CORE;
-                
-                if ( read_miss ) 
-                    c_state <= CS_FILL3; 
+                source_sel  <= 1 << C_CORE;
+
+                if ( read_miss )
+                    c_state <= CS_FILL3;
                end
-                   
-                
+
+
              CS_FILL3 :
                 begin
                 // Pick a way to write the cache update into
                 // Either pick one of the invalid caches, or if all are valid, then pick
                 // one randomly
-                select_way  <= next_way; 
-                random_num  <= {random_num[2], random_num[1], random_num[0], 
+                select_way  <= next_way;
+                random_num  <= {random_num[2], random_num[1], random_num[0],
                                  random_num[3]^random_num[2]};
-                                 
+
                 // third read of burst of 4
                 // wb read request asserted, wait for ack
-                if ( i_wb_ready ) 
+                if ( i_wb_ready )
                     begin
                     c_state     <= CS_FILL_COMPLETE;
                     end
                 end
-                
+
 
              // Write the read fetch data in this cycle
-             CS_FILL_COMPLETE : 
+             CS_FILL_COMPLETE :
                 begin
                 // Back to normal cache operations, but
                 // use physical address for first read as
                 // address moved before the stall was asserted for the read_miss
                 // However don't use it if its a non-cached address!
-                source_sel  <= 1'd1 << C_CORE;              
-                c_state     <= CS_TURN_AROUND;    
-                end                                 
-                                                        
+                source_sel  <= 1 << C_CORE;
+                c_state     <= CS_TURN_AROUND;
+                end
 
-             // Ignore the tag read data in this cycle   
-             // Wait 1 cycle to pre-read the cache and return to normal operation                 
-             CS_TURN_AROUND : 
+
+             // Ignore the tag read data in this cycle
+             // Wait 1 cycle to pre-read the cache and return to normal operation
+             CS_TURN_AROUND :
                 begin
                 c_state     <= CS_IDLE;
                 end
-                
-        endcase                       
+
+            default:
+                  begin
+                  end
+
+
+        endcase
 
 
 // ======================================
@@ -312,28 +316,28 @@ assign invalid_read = address_r != i_address;
 always @(posedge i_clk)
     if ( o_wb_req )
         wb_address <= i_address;
-    else if ( i_wb_ready && fill_state )    
+    else if ( i_wb_ready && fill_state )
         wb_address <= {wb_address[31:4], wb_address[3:2] + 1'd1, 2'd0};
-        
+
 assign fill_state       = c_state == CS_FILL3;
 assign wb_hit           = i_address == wb_address && i_wb_ready && fill_state;
 
 assign tag_address      = read_miss_fill     ? miss_address      [CACHE_ADDR32_MSB:CACHE_ADDR32_LSB] :
                           source_sel[C_INIT] ? init_count[CACHE_ADDR_WIDTH-1:0]                      :
                                                address                                               ;
-                                               
 
-assign data_address     = read_miss_fill     ? miss_address[CACHE_ADDR32_MSB:CACHE_ADDR32_LSB] : 
+
+assign data_address     = read_miss_fill     ? miss_address[CACHE_ADDR32_MSB:CACHE_ADDR32_LSB] :
                                                address                                         ;
 
-                                                          
+
 assign tag_wdata        = read_miss_fill     ? {1'd1, miss_address[31:TAG_ADDR32_LSB]} :
                                                {TAG_WIDTH{1'd0}}                       ;
 
 
 assign read_miss_fill   = c_state == CS_FILL3 && i_wb_ready;
 
-                          
+
 
 assign tag_wenable      = read_miss_fill     ? 1'd1  :
                           source_sel[C_INVA] ? 1'd1  :
@@ -342,7 +346,7 @@ assign tag_wenable      = read_miss_fill     ? 1'd1  :
                           source_sel[C_CORE] ? 1'd0  :
                                                1'd0  ;
 
-                          
+
 assign enable           = i_select && i_cache_enable;
 
 assign idle_hit         = |data_hit_way;
@@ -361,7 +365,7 @@ assign cache_busy_stall = (c_state == CS_TURN_AROUND  && enable && !read_buf_hit
 generate
     for ( i=0; i<WAYS;i=i+1 ) begin : rams
 
-        // Tag RAMs 
+        // Tag RAMs
         `ifdef XILINX_SPARTAN6_FPGA
         xs6_sram_256x21_line_en
         `endif
@@ -371,7 +375,7 @@ generate
         `endif
 
         `ifndef XILINX_FPGA
-        generic_sram_line_en 
+        generic_sram_line_en
         `endif
 
             #(
@@ -386,8 +390,8 @@ generate
 
             .o_read_data                ( tag_rdata_way[i]      )
             );
-            
-        // Data RAMs 
+
+        // Data RAMs
         `ifdef XILINX_SPARTAN6_FPGA
         xs6_sram_256x128_byte_en
         `endif
@@ -410,7 +414,7 @@ generate
             .i_address                  ( data_address                  ),
             .i_byte_enable              ( {CACHE_LINE_WIDTH/8{1'd1}}    ),
             .o_read_data                ( data_rdata_way[i]             )
-            );                                                     
+            );
 
 
         // Per tag-ram write-enable
@@ -420,10 +424,10 @@ generate
         assign data_wenable_way[i] = ( source_sel[C_FILL] || read_miss_fill ) && select_way[i];
 
         // Per data-ram idle_hit flag
-        assign data_hit_way[i]     = tag_rdata_way[i][TAG_WIDTH-1] &&                                                  
-                                     tag_rdata_way[i][TAG_ADDR_WIDTH-1:0] == i_address[31:TAG_ADDR32_LSB] &&  
-                                     c_state == CS_IDLE;                                                               
-    end                                                         
+        assign data_hit_way[i]     = tag_rdata_way[i][TAG_WIDTH-1] &&
+                                     tag_rdata_way[i][TAG_ADDR_WIDTH-1:0] == i_address[31:TAG_ADDR32_LSB] &&
+                                     c_state == CS_IDLE;
+    end
 endgenerate
 
 
@@ -431,46 +435,15 @@ endgenerate
 // Register Valid Bits
 // ======================================
 generate
-if ( WAYS == 2 ) begin : valid_bits_2ways
+begin : valid_bits_4ways
 
     always @ ( posedge i_clk )
         if ( c_state == CS_IDLE )
-            valid_bits_r <= {tag_rdata_way[1][TAG_WIDTH-1], 
+            valid_bits_r <= {tag_rdata_way[3][TAG_WIDTH-1],
+                             tag_rdata_way[2][TAG_WIDTH-1],
+                             tag_rdata_way[1][TAG_WIDTH-1],
                              tag_rdata_way[0][TAG_WIDTH-1]};
-                           
-end
-else if ( WAYS == 3 ) begin : valid_bits_3ways
 
-    always @ ( posedge i_clk )
-        if ( c_state == CS_IDLE )
-            valid_bits_r <= {tag_rdata_way[2][TAG_WIDTH-1], 
-                             tag_rdata_way[1][TAG_WIDTH-1], 
-                             tag_rdata_way[0][TAG_WIDTH-1]};
-                           
-end
-else if ( WAYS == 4 ) begin : valid_bits_4ways
-
-    always @ ( posedge i_clk )
-        if ( c_state == CS_IDLE )
-            valid_bits_r <= {tag_rdata_way[3][TAG_WIDTH-1], 
-                             tag_rdata_way[2][TAG_WIDTH-1], 
-                             tag_rdata_way[1][TAG_WIDTH-1], 
-                             tag_rdata_way[0][TAG_WIDTH-1]};
-                           
-end
-else begin : valid_bits_8ways
-
-    always @ ( posedge i_clk )
-        if ( c_state == CS_IDLE )
-            valid_bits_r <= {tag_rdata_way[7][TAG_WIDTH-1], 
-                             tag_rdata_way[6][TAG_WIDTH-1], 
-                             tag_rdata_way[5][TAG_WIDTH-1], 
-                             tag_rdata_way[4][TAG_WIDTH-1], 
-                             tag_rdata_way[3][TAG_WIDTH-1], 
-                             tag_rdata_way[2][TAG_WIDTH-1], 
-                             tag_rdata_way[1][TAG_WIDTH-1], 
-                             tag_rdata_way[0][TAG_WIDTH-1]};
-                           
 end
 endgenerate
 
@@ -479,42 +452,14 @@ endgenerate
 // Select read hit data
 // ======================================
 generate
-if ( WAYS == 2 ) begin : read_data_2ways
-
-    assign hit_rdata    = data_hit_way[0] ? data_rdata_way[0] :
-                          data_hit_way[1] ? data_rdata_way[1] :
-                                     {CACHE_LINE_WIDTH{1'd1}} ;  // all 1's for debug
-                           
-end
-else if ( WAYS == 3 ) begin : read_data_3ways
-
-    assign hit_rdata    = data_hit_way[0] ? data_rdata_way[0] :
-                          data_hit_way[1] ? data_rdata_way[1] :
-                          data_hit_way[2] ? data_rdata_way[2] :
-                                     {CACHE_LINE_WIDTH{1'd1}} ;  // all 1's for debug
-                           
-end
-else if ( WAYS == 4 ) begin : read_data_4ways
+begin : read_data_4ways
 
     assign hit_rdata    = data_hit_way[0] ? data_rdata_way[0] :
                           data_hit_way[1] ? data_rdata_way[1] :
                           data_hit_way[2] ? data_rdata_way[2] :
                           data_hit_way[3] ? data_rdata_way[3] :
                                      {CACHE_LINE_WIDTH{1'd1}} ;  // all 1's for debug
-                           
-end
-else begin : read_data_8ways
 
-    assign hit_rdata    = data_hit_way[0] ? data_rdata_way[0] :
-                          data_hit_way[1] ? data_rdata_way[1] :
-                          data_hit_way[2] ? data_rdata_way[2] :
-                          data_hit_way[3] ? data_rdata_way[3] :
-                          data_hit_way[4] ? data_rdata_way[4] :
-                          data_hit_way[5] ? data_rdata_way[5] :
-                          data_hit_way[6] ? data_rdata_way[6] :
-                          data_hit_way[7] ? data_rdata_way[7] :
-                                     {CACHE_LINE_WIDTH{1'd1}} ;  // all 1's for debug
-                           
 end
 endgenerate
 
@@ -524,64 +469,7 @@ endgenerate
 // for fills
 // ======================================
 generate
-if ( WAYS == 2 ) begin : pick_way_2ways
-
-    assign next_way = pick_way ( valid_bits_r, random_num );
-
-    function [WAYS-1:0] pick_way;
-    input [WAYS-1:0] valid_bits;
-    input [3:0]      random_num;
-    begin
-        if (      valid_bits[0] == 1'd0 )
-            // way 0 not occupied so use it
-            pick_way     = 2'b01;
-        else if ( valid_bits[1] == 1'd0 )
-            // way 1 not occupied so use it
-            pick_way     = 2'b10;
-        else
-            begin
-            // All ways occupied so pick one randomly
-            case (random_num[3:1])
-                3'd0, 3'd3,
-                3'd5, 3'd6: pick_way = 2'b10;
-                default:    pick_way = 2'b01;
-            endcase
-            end
-    end
-    endfunction
-                                                      
-end
-else if ( WAYS == 3 ) begin : pick_way_3ways
-
-    assign next_way = pick_way ( valid_bits_r, random_num );
-
-    function [WAYS-1:0] pick_way;
-    input [WAYS-1:0] valid_bits;
-    input [3:0]      random_num;
-    begin
-        if (      valid_bits[0] == 1'd0 )
-            // way 0 not occupied so use it
-            pick_way     = 3'b001;
-        else if ( valid_bits[1] == 1'd0 )
-            // way 1 not occupied so use it
-            pick_way     = 3'b010;
-        else if ( valid_bits[2] == 1'd0 )
-            // way 2 not occupied so use it
-            pick_way     = 3'b100;
-        else
-            begin
-            // All ways occupied so pick one randomly
-            case (random_num[3:1])
-                3'd0, 3'd1, 3'd2: pick_way = 3'b010;
-                3'd2, 3'd3, 3'd4: pick_way = 3'b100;
-                default:          pick_way = 3'b001;
-            endcase
-            end
-    end
-    endfunction
-                           
-end
-else if ( WAYS == 4 ) begin : pick_way_4ways
+begin : pick_way_4ways
 
     assign next_way = pick_way ( valid_bits_r, random_num );
 
@@ -613,146 +501,15 @@ else if ( WAYS == 4 ) begin : pick_way_4ways
             end
     end
     endfunction
-                           
-end
-else begin : pick_way_8ways
 
-    assign next_way = pick_way ( valid_bits_r, random_num );
-
-    function [WAYS-1:0] pick_way;
-    input [WAYS-1:0] valid_bits;
-    input [3:0]      random_num;
-    begin
-        if (      valid_bits[0] == 1'd0 )
-            // way 0 not occupied so use it
-            pick_way     = 8'b00000001;
-        else if ( valid_bits[1] == 1'd0 )
-            // way 1 not occupied so use it
-            pick_way     = 8'b00000010;
-        else if ( valid_bits[2] == 1'd0 )
-            // way 2 not occupied so use it
-            pick_way     = 8'b00000100;
-        else if ( valid_bits[3] == 1'd0 )
-            // way 3 not occupied so use it
-            pick_way     = 8'b00001000;
-        else if ( valid_bits[4] == 1'd0 )
-            // way 3 not occupied so use it
-            pick_way     = 8'b00010000;
-        else if ( valid_bits[5] == 1'd0 )
-            // way 3 not occupied so use it
-            pick_way     = 8'b00100000;
-        else if ( valid_bits[6] == 1'd0 )
-            // way 3 not occupied so use it
-            pick_way     = 8'b01000000;
-        else if ( valid_bits[7] == 1'd0 )
-            // way 3 not occupied so use it
-            pick_way     = 8'b10000000;
-        else
-            begin
-            // All ways occupied so pick one randomly
-            case (random_num[3:1])
-                3'd0:       pick_way = 8'b00010000;
-                3'd1:       pick_way = 8'b00100000;
-                3'd2:       pick_way = 8'b01000000;
-                3'd3:       pick_way = 8'b10000000;
-                3'd4:       pick_way = 8'b00000001;
-                3'd5:       pick_way = 8'b00000010;
-                3'd6:       pick_way = 8'b00000100;
-                default:    pick_way = 8'b00001000;
-            endcase
-            end
-    end
-    endfunction
-                           
 end
+
 endgenerate
 
 
 // ========================================================
 // Debug WB bus - not synthesizable
 // ========================================================
-//synopsys translate_off
-wire    [(6*8)-1:0]     xSOURCE_SEL;
-wire    [(20*8)-1:0]    xC_STATE;
 
-assign xSOURCE_SEL = source_sel[C_CORE]            ? "C_CORE"           :
-                     source_sel[C_INIT]            ? "C_INIT"           :
-                     source_sel[C_FILL]            ? "C_FILL"           :
-                     source_sel[C_INVA]            ? "C_INVA"           :
-                                                     "UNKNON"           ;
- 
-assign xC_STATE    = c_state == CS_INIT            ? "CS_INIT"          :
-                     c_state == CS_IDLE            ? "CS_IDLE"          :
-                     c_state == CS_FILL0           ? "CS_FILL0"         :
-                     c_state == CS_FILL1           ? "CS_FILL1"         :
-                     c_state == CS_FILL2           ? "CS_FILL2"         :
-                     c_state == CS_FILL3           ? "CS_FILL3"         :
-                     c_state == CS_FILL4           ? "CS_FILL4"         :
-                     c_state == CS_FILL_COMPLETE   ? "CS_FILL_COMPLETE" :
-                     c_state == CS_EX_DELETE       ? "CS_EX_DELETE"     :
-                     c_state == CS_TURN_AROUND     ? "CS_TURN_AROUND"   :
-                     c_state == CS_WRITE_HIT1      ? "CS_WRITE_HIT1"    :
-                                                     "UNKNOWN"          ;
-
-
-generate
-if ( WAYS == 2 ) begin : check_hit_2ways
-
-    always @( posedge i_clk )
-        if ( (data_hit_way[0] + data_hit_way[1] ) > 4'd1 )
-            begin
-            `TB_ERROR_MESSAGE
-            $display("Hit in more than one cache ways!");                                                  
-            end
-                                                      
-end
-else if ( WAYS == 3 ) begin : check_hit_3ways
-
-    always @( posedge i_clk )
-        if ( (data_hit_way[0] + data_hit_way[1] + data_hit_way[2] ) > 4'd1 )
-            begin
-            `TB_ERROR_MESSAGE
-            $display("Hit in more than one cache ways!");                                                  
-            end
-                           
-end
-else if ( WAYS == 4 ) begin : check_hit_4ways
-
-    always @( posedge i_clk )
-        if ( (data_hit_way[0] + data_hit_way[1] + 
-              data_hit_way[2] + data_hit_way[3] ) > 4'd1 )
-            begin
-            `TB_ERROR_MESSAGE
-            $display("Hit in more than one cache ways!");                                                  
-            end
-                           
-end
-else if ( WAYS == 8 )  begin : check_hit_8ways
-
-    always @( posedge i_clk )
-        if ( (data_hit_way[0] + data_hit_way[1] + 
-              data_hit_way[2] + data_hit_way[3] +
-              data_hit_way[4] + data_hit_way[5] +
-              data_hit_way[6] + data_hit_way[7] ) > 4'd1 )
-            begin
-            `TB_ERROR_MESSAGE
-            $display("Hit in more than one cache ways!");                                                  
-            end
-                           
-end
-else begin : check_hit_nways
-
-    initial
-        begin
-        `TB_ERROR_MESSAGE
-        $display("Unsupported number of ways %0d", WAYS);
-        $display("Set A25_ICACHE_WAYS in a25_config_defines.v to either 2,3,4 or 8");
-        end
-
-end
-endgenerate
-    
-//synopsys translate_on
-    
 endmodule
 

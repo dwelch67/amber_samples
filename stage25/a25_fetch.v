@@ -48,7 +48,7 @@ input                       i_clk,
 input                       i_mem_stall,
 input                       i_exec_stall,
 input                       i_conflict,         // Decode stage stall pipeline because of an instruction conflict
-output                      o_fetch_stall,      // when this is asserted all registers 
+output                      o_fetch_stall,      // when this is asserted all registers
                                                 // in decode and exec stages are frozen
 input                       i_system_rdy,       // External system can stall core with this signal
 
@@ -68,7 +68,15 @@ input                       i_wb_ready
 
 );
 
-`include "memory_configuration.v"
+// Used in fetch.v and l2cache.v to allow accesses to these addresses
+// to be cached
+function in_cachable_mem;
+    input [31:0] address;
+begin
+    in_cachable_mem = ( address < 32'h80000000 );
+end
+endfunction
+
 
 wire                        core_stall;
 wire                        cache_stall;
@@ -105,7 +113,7 @@ assign wb_rdata32 = i_iaddress[3:2] == 2'd0 ? i_wb_read_data[ 31: 0] :
                     i_iaddress[3:2] == 2'd2 ? i_wb_read_data[ 95:64] :
                                               i_wb_read_data[127:96] ;
 
-assign o_fetch_instruction = sel_cache                  ? cache_read_data : 
+assign o_fetch_instruction = sel_cache                  ? cache_read_data :
                              uncached_instruction_read  ? wb_rdata32      :
                                                           32'hffeeddcc    ;
 
@@ -131,14 +139,14 @@ a25_icache u_cache (
     .i_clk                      ( i_clk                 ),
     .i_core_stall               ( core_stall            ),
     .o_stall                    ( cache_stall           ),
-    
+
     .i_select                   ( sel_cache             ),
     .i_address                  ( i_iaddress            ),
     .i_address_nxt              ( i_iaddress_nxt        ),
     .i_cache_enable             ( i_cache_enable        ),
     .i_cache_flush              ( i_cache_flush         ),
     .o_read_data                ( cache_read_data128    ),
-    
+
     .o_wb_req                   ( icache_wb_req         ),
     .i_wb_read_data             ( i_wb_read_data        ),
     .i_wb_ready                 ( i_wb_ready            )

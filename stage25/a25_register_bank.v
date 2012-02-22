@@ -51,7 +51,7 @@ input       [1:0]           i_mode_idec,            // user, supervisor, irq_ide
                                                     // Used for register writes
 input       [1:0]           i_mode_exec,            // 1 periods delayed from i_mode_idec
                                                     // Used for register reads
-input       [3:0]           i_mode_rds_exec,        // Use one-hot version specifically for rds, 
+input       [3:0]           i_mode_rds_exec,        // Use one-hot version specifically for rds,
                                                     // includes i_user_mode_regs_store
 input                       i_firq_not_user_mode,
 input       [3:0]           i_rm_sel,
@@ -189,22 +189,22 @@ assign pc_dmem_wen    = i_wb_read_data_valid & ~i_mem_stall & i_wb_read_data_rd 
 always @ ( posedge i_clk )
     begin
     // these registers are used in all modes
-    r0       <= reg_bank_wen_c[0 ]               ? i_reg : read_data_wen[0 ]                      ? i_wb_read_data       : r0;  
-    r1       <= reg_bank_wen_c[1 ]               ? i_reg : read_data_wen[1 ]                      ? i_wb_read_data       : r1;  
-    r2       <= reg_bank_wen_c[2 ]               ? i_reg : read_data_wen[2 ]                      ? i_wb_read_data       : r2;  
-    r3       <= reg_bank_wen_c[3 ]               ? i_reg : read_data_wen[3 ]                      ? i_wb_read_data       : r3;  
-    r4       <= reg_bank_wen_c[4 ]               ? i_reg : read_data_wen[4 ]                      ? i_wb_read_data       : r4;  
-    r5       <= reg_bank_wen_c[5 ]               ? i_reg : read_data_wen[5 ]                      ? i_wb_read_data       : r5;  
-    r6       <= reg_bank_wen_c[6 ]               ? i_reg : read_data_wen[6 ]                      ? i_wb_read_data       : r6;  
-    r7       <= reg_bank_wen_c[7 ]               ? i_reg : read_data_wen[7 ]                      ? i_wb_read_data       : r7;  
-    
+    r0       <= reg_bank_wen_c[0 ]               ? i_reg : read_data_wen[0 ]                      ? i_wb_read_data       : r0;
+    r1       <= reg_bank_wen_c[1 ]               ? i_reg : read_data_wen[1 ]                      ? i_wb_read_data       : r1;
+    r2       <= reg_bank_wen_c[2 ]               ? i_reg : read_data_wen[2 ]                      ? i_wb_read_data       : r2;
+    r3       <= reg_bank_wen_c[3 ]               ? i_reg : read_data_wen[3 ]                      ? i_wb_read_data       : r3;
+    r4       <= reg_bank_wen_c[4 ]               ? i_reg : read_data_wen[4 ]                      ? i_wb_read_data       : r4;
+    r5       <= reg_bank_wen_c[5 ]               ? i_reg : read_data_wen[5 ]                      ? i_wb_read_data       : r5;
+    r6       <= reg_bank_wen_c[6 ]               ? i_reg : read_data_wen[6 ]                      ? i_wb_read_data       : r6;
+    r7       <= reg_bank_wen_c[7 ]               ? i_reg : read_data_wen[7 ]                      ? i_wb_read_data       : r7;
+
     // these registers are used in all modes, except fast irq
-    r8       <= reg_bank_wen_c[8 ] && !firq_idec ? i_reg : read_data_wen[8 ] && i_wb_mode != FIRQ ? i_wb_read_data       : r8;  
-    r9       <= reg_bank_wen_c[9 ] && !firq_idec ? i_reg : read_data_wen[9 ] && i_wb_mode != FIRQ ? i_wb_read_data       : r9;  
-    r10      <= reg_bank_wen_c[10] && !firq_idec ? i_reg : read_data_wen[10] && i_wb_mode != FIRQ ? i_wb_read_data       : r10; 
-    r11      <= reg_bank_wen_c[11] && !firq_idec ? i_reg : read_data_wen[11] && i_wb_mode != FIRQ ? i_wb_read_data       : r11; 
-    r12      <= reg_bank_wen_c[12] && !firq_idec ? i_reg : read_data_wen[12] && i_wb_mode != FIRQ ? i_wb_read_data       : r12; 
-    
+    r8       <= reg_bank_wen_c[8 ] && !firq_idec ? i_reg : read_data_wen[8 ] && i_wb_mode != FIRQ ? i_wb_read_data       : r8;
+    r9       <= reg_bank_wen_c[9 ] && !firq_idec ? i_reg : read_data_wen[9 ] && i_wb_mode != FIRQ ? i_wb_read_data       : r9;
+    r10      <= reg_bank_wen_c[10] && !firq_idec ? i_reg : read_data_wen[10] && i_wb_mode != FIRQ ? i_wb_read_data       : r10;
+    r11      <= reg_bank_wen_c[11] && !firq_idec ? i_reg : read_data_wen[11] && i_wb_mode != FIRQ ? i_wb_read_data       : r11;
+    r12      <= reg_bank_wen_c[12] && !firq_idec ? i_reg : read_data_wen[12] && i_wb_mode != FIRQ ? i_wb_read_data       : r12;
+
     // these registers are used in fast irq mode
     r8_firq  <= reg_bank_wen_c[8 ] &&  firq_idec ? i_reg : read_data_wen[8 ] && i_wb_mode == FIRQ ? i_wb_read_data       : r8_firq;
     r9_firq  <= reg_bank_wen_c[9 ] &&  firq_idec ? i_reg : read_data_wen[9 ] && i_wb_mode == FIRQ ? i_wb_read_data       : r9_firq;
@@ -213,26 +213,26 @@ always @ ( posedge i_clk )
     r12_firq <= reg_bank_wen_c[12] &&  firq_idec ? i_reg : read_data_wen[12] && i_wb_mode == FIRQ ? i_wb_read_data       : r12_firq;
 
     // these registers are used in user mode
-    r13      <= reg_bank_wen_c[13] &&  usr_idec  ? i_reg : read_data_wen[13] && i_wb_mode == USR ? i_wb_read_data        : r13;         
-    r14      <= reg_bank_wen_c[14] &&  usr_idec  ? i_reg : read_data_wen[14] && i_wb_mode == USR ? i_wb_read_data        : r14;         
- 
+    r13      <= reg_bank_wen_c[13] &&  usr_idec  ? i_reg : read_data_wen[13] && i_wb_mode == USR ? i_wb_read_data        : r13;
+    r14      <= reg_bank_wen_c[14] &&  usr_idec  ? i_reg : read_data_wen[14] && i_wb_mode == USR ? i_wb_read_data        : r14;
+
     // these registers are used in supervisor mode
-    r13_svc  <= reg_bank_wen_c[13] &&  svc_idec  ? i_reg : read_data_wen[13] && i_wb_mode == SVC  ? i_wb_read_data       : r13_svc;     
-    r14_svc  <= reg_bank_wen_c[14] &&  svc_idec  ? i_reg : read_data_wen[14] && i_wb_mode == SVC  ? i_wb_read_data       : r14_svc;     
-   
+    r13_svc  <= reg_bank_wen_c[13] &&  svc_idec  ? i_reg : read_data_wen[13] && i_wb_mode == SVC  ? i_wb_read_data       : r13_svc;
+    r14_svc  <= reg_bank_wen_c[14] &&  svc_idec  ? i_reg : read_data_wen[14] && i_wb_mode == SVC  ? i_wb_read_data       : r14_svc;
+
     // these registers are used in irq mode
-    r13_irq  <= reg_bank_wen_c[13] &&  irq_idec  ? i_reg : read_data_wen[13] && i_wb_mode == IRQ  ? i_wb_read_data       : r13_irq; 
-    r14_irq  <= (reg_bank_wen_c[14] && irq_idec) ? i_reg : read_data_wen[14] && i_wb_mode == IRQ  ? i_wb_read_data       : r14_irq;      
-  
+    r13_irq  <= reg_bank_wen_c[13] &&  irq_idec  ? i_reg : read_data_wen[13] && i_wb_mode == IRQ  ? i_wb_read_data       : r13_irq;
+    r14_irq  <= (reg_bank_wen_c[14] && irq_idec) ? i_reg : read_data_wen[14] && i_wb_mode == IRQ  ? i_wb_read_data       : r14_irq;
+
     // these registers are used in fast irq mode
     r13_firq <= reg_bank_wen_c[13] &&  firq_idec ? i_reg : read_data_wen[13] && i_wb_mode == FIRQ ? i_wb_read_data       : r13_firq;
-    r14_firq <= reg_bank_wen_c[14] &&  firq_idec ? i_reg : read_data_wen[14] && i_wb_mode == FIRQ ? i_wb_read_data       : r14_firq;  
-    
+    r14_firq <= reg_bank_wen_c[14] &&  firq_idec ? i_reg : read_data_wen[14] && i_wb_mode == FIRQ ? i_wb_read_data       : r14_firq;
+
     // these registers are used in all modes
     r15      <= pc_wen_c                         ?  i_pc : pc_dmem_wen                            ? i_wb_read_data[25:2] : r15;
     end
-    
-    
+
+
 // ========================================================
 // Register Read based on Mode
 // ========================================================
@@ -255,43 +255,43 @@ assign r13_out = usr_exec ? r13      :
                  svc_exec ? r13_svc  :
                  irq_exec ? r13_irq  :
                           r13_firq ;
-                       
+
 assign r14_out = usr_exec ? r14      :
                  svc_exec ? r14_svc  :
                  irq_exec ? r14_irq  :
                           r14_firq ;
- 
 
-assign r15_out_rm     = { i_status_bits_flags, 
-                          i_status_bits_irq_mask, 
-                          i_status_bits_firq_mask, 
-                          r15, 
+
+assign r15_out_rm     = { i_status_bits_flags,
+                          i_status_bits_irq_mask,
+                          i_status_bits_firq_mask,
+                          r15,
                           i_mode_exec};
 
-assign r15_out_rm_nxt = { i_status_bits_flags, 
-                          i_status_bits_irq_mask, 
-                          i_status_bits_firq_mask, 
-                          i_pc, 
+assign r15_out_rm_nxt = { i_status_bits_flags,
+                          i_status_bits_irq_mask,
+                          i_status_bits_firq_mask,
+                          i_pc,
                           i_mode_exec};
-                      
+
 assign r15_out_rn     = {6'd0, r15, 2'd0};
 
 
 // rds outputs
-assign r8_rds  = i_mode_rds_exec[OH_FIRQ] ? r8_firq  : r8;
-assign r9_rds  = i_mode_rds_exec[OH_FIRQ] ? r9_firq  : r9;
-assign r10_rds = i_mode_rds_exec[OH_FIRQ] ? r10_firq : r10;
-assign r11_rds = i_mode_rds_exec[OH_FIRQ] ? r11_firq : r11;
-assign r12_rds = i_mode_rds_exec[OH_FIRQ] ? r12_firq : r12;
+assign r8_rds  = i_mode_rds_exec[OH_FIRQ[1:0]] ? r8_firq  : r8;
+assign r9_rds  = i_mode_rds_exec[OH_FIRQ[1:0]] ? r9_firq  : r9;
+assign r10_rds = i_mode_rds_exec[OH_FIRQ[1:0]] ? r10_firq : r10;
+assign r11_rds = i_mode_rds_exec[OH_FIRQ[1:0]] ? r11_firq : r11;
+assign r12_rds = i_mode_rds_exec[OH_FIRQ[1:0]] ? r12_firq : r12;
 
-assign r13_rds = i_mode_rds_exec[OH_USR]  ? r13      :
-                 i_mode_rds_exec[OH_SVC]  ? r13_svc  :
-                 i_mode_rds_exec[OH_IRQ]  ? r13_irq  :
-                                            r13_firq ;
-                       
-assign r14_rds = i_mode_rds_exec[OH_USR]  ? r14      :
-                 i_mode_rds_exec[OH_SVC]  ? r14_svc  :
-                 i_mode_rds_exec[OH_IRQ]  ? r14_irq  :
+assign r13_rds =  i_mode_rds_exec[OH_USR[1:0]]  ? r13      :
+                  i_mode_rds_exec[OH_SVC[1:0]]  ? r13_svc  :
+                  i_mode_rds_exec[OH_IRQ[1:0]]  ? r13_irq  :
+                                                  r13_firq ;
+
+assign r14_rds =  i_mode_rds_exec[OH_USR[1:0]]  ? r14      :
+                  i_mode_rds_exec[OH_SVC[1:0]]  ? r14_svc  :
+                  i_mode_rds_exec[OH_IRQ[1:0]]  ? r14_irq  :
                                             r14_firq ;
 
 
@@ -304,21 +304,21 @@ assign o_pc = r15_out_rn;
 // Rm Selector
 // ========================================================
 assign o_rm = i_rm_sel == 4'd0  ? r0_out  :
-              i_rm_sel == 4'd1  ? r1_out  : 
-              i_rm_sel == 4'd2  ? r2_out  : 
-              i_rm_sel == 4'd3  ? r3_out  : 
-              i_rm_sel == 4'd4  ? r4_out  : 
-              i_rm_sel == 4'd5  ? r5_out  : 
-              i_rm_sel == 4'd6  ? r6_out  : 
-              i_rm_sel == 4'd7  ? r7_out  : 
-              i_rm_sel == 4'd8  ? r8_out  : 
-              i_rm_sel == 4'd9  ? r9_out  : 
-              i_rm_sel == 4'd10 ? r10_out : 
-              i_rm_sel == 4'd11 ? r11_out : 
-              i_rm_sel == 4'd12 ? r12_out : 
-              i_rm_sel == 4'd13 ? r13_out : 
-              i_rm_sel == 4'd14 ? r14_out : 
-                                  r15_out_rm ; 
+              i_rm_sel == 4'd1  ? r1_out  :
+              i_rm_sel == 4'd2  ? r2_out  :
+              i_rm_sel == 4'd3  ? r3_out  :
+              i_rm_sel == 4'd4  ? r4_out  :
+              i_rm_sel == 4'd5  ? r5_out  :
+              i_rm_sel == 4'd6  ? r6_out  :
+              i_rm_sel == 4'd7  ? r7_out  :
+              i_rm_sel == 4'd8  ? r8_out  :
+              i_rm_sel == 4'd9  ? r9_out  :
+              i_rm_sel == 4'd10 ? r10_out :
+              i_rm_sel == 4'd11 ? r11_out :
+              i_rm_sel == 4'd12 ? r12_out :
+              i_rm_sel == 4'd13 ? r13_out :
+              i_rm_sel == 4'd14 ? r14_out :
+                                  r15_out_rm ;
 
 
 // ========================================================
@@ -327,67 +327,67 @@ assign o_rm = i_rm_sel == 4'd0  ? r0_out  :
 always @*
     case ( i_rs_sel )
        4'd0  :  o_rs = r0_out  ;
-       4'd1  :  o_rs = r1_out  ; 
-       4'd2  :  o_rs = r2_out  ; 
-       4'd3  :  o_rs = r3_out  ; 
-       4'd4  :  o_rs = r4_out  ; 
-       4'd5  :  o_rs = r5_out  ; 
-       4'd6  :  o_rs = r6_out  ; 
-       4'd7  :  o_rs = r7_out  ; 
-       4'd8  :  o_rs = r8_rds  ; 
-       4'd9  :  o_rs = r9_rds  ; 
-       4'd10 :  o_rs = r10_rds ; 
-       4'd11 :  o_rs = r11_rds ; 
-       4'd12 :  o_rs = r12_rds ; 
-       4'd13 :  o_rs = r13_rds ; 
-       4'd14 :  o_rs = r14_rds ; 
-       default: o_rs = r15_out_rn ; 
+       4'd1  :  o_rs = r1_out  ;
+       4'd2  :  o_rs = r2_out  ;
+       4'd3  :  o_rs = r3_out  ;
+       4'd4  :  o_rs = r4_out  ;
+       4'd5  :  o_rs = r5_out  ;
+       4'd6  :  o_rs = r6_out  ;
+       4'd7  :  o_rs = r7_out  ;
+       4'd8  :  o_rs = r8_rds  ;
+       4'd9  :  o_rs = r9_rds  ;
+       4'd10 :  o_rs = r10_rds ;
+       4'd11 :  o_rs = r11_rds ;
+       4'd12 :  o_rs = r12_rds ;
+       4'd13 :  o_rs = r13_rds ;
+       4'd14 :  o_rs = r14_rds ;
+       default: o_rs = r15_out_rn ;
     endcase
 
-                                    
+
 // ========================================================
 // Rd Selector
 // ========================================================
 always @*
     case ( i_rs_sel )
        4'd0  :  o_rd = r0_out  ;
-       4'd1  :  o_rd = r1_out  ; 
-       4'd2  :  o_rd = r2_out  ; 
-       4'd3  :  o_rd = r3_out  ; 
-       4'd4  :  o_rd = r4_out  ; 
-       4'd5  :  o_rd = r5_out  ; 
-       4'd6  :  o_rd = r6_out  ; 
-       4'd7  :  o_rd = r7_out  ; 
-       4'd8  :  o_rd = r8_rds  ; 
-       4'd9  :  o_rd = r9_rds  ; 
-       4'd10 :  o_rd = r10_rds ; 
-       4'd11 :  o_rd = r11_rds ; 
-       4'd12 :  o_rd = r12_rds ; 
-       4'd13 :  o_rd = r13_rds ; 
-       4'd14 :  o_rd = r14_rds ; 
-       default: o_rd = r15_out_rm_nxt ; 
+       4'd1  :  o_rd = r1_out  ;
+       4'd2  :  o_rd = r2_out  ;
+       4'd3  :  o_rd = r3_out  ;
+       4'd4  :  o_rd = r4_out  ;
+       4'd5  :  o_rd = r5_out  ;
+       4'd6  :  o_rd = r6_out  ;
+       4'd7  :  o_rd = r7_out  ;
+       4'd8  :  o_rd = r8_rds  ;
+       4'd9  :  o_rd = r9_rds  ;
+       4'd10 :  o_rd = r10_rds ;
+       4'd11 :  o_rd = r11_rds ;
+       4'd12 :  o_rd = r12_rds ;
+       4'd13 :  o_rd = r13_rds ;
+       4'd14 :  o_rd = r14_rds ;
+       default: o_rd = r15_out_rm_nxt ;
     endcase
 
-                                    
+
 // ========================================================
 // Rn Selector
 // ========================================================
 assign o_rn = i_rn_sel == 4'd0  ? r0_out  :
-              i_rn_sel == 4'd1  ? r1_out  : 
-              i_rn_sel == 4'd2  ? r2_out  : 
-              i_rn_sel == 4'd3  ? r3_out  : 
-              i_rn_sel == 4'd4  ? r4_out  : 
-              i_rn_sel == 4'd5  ? r5_out  : 
-              i_rn_sel == 4'd6  ? r6_out  : 
-              i_rn_sel == 4'd7  ? r7_out  : 
-              i_rn_sel == 4'd8  ? r8_out  : 
-              i_rn_sel == 4'd9  ? r9_out  : 
-              i_rn_sel == 4'd10 ? r10_out : 
-              i_rn_sel == 4'd11 ? r11_out : 
-              i_rn_sel == 4'd12 ? r12_out : 
-              i_rn_sel == 4'd13 ? r13_out : 
-              i_rn_sel == 4'd14 ? r14_out : 
-                                  r15_out_rn ; 
+              i_rn_sel == 4'd1  ? r1_out  :
+              i_rn_sel == 4'd2  ? r2_out  :
+              i_rn_sel == 4'd3  ? r3_out  :
+              i_rn_sel == 4'd4  ? r4_out  :
+              i_rn_sel == 4'd5  ? r5_out  :
+              i_rn_sel == 4'd6  ? r6_out  :
+              i_rn_sel == 4'd7  ? r7_out  :
+              i_rn_sel == 4'd8  ? r8_out  :
+              i_rn_sel == 4'd9  ? r9_out  :
+              i_rn_sel == 4'd10 ? r10_out :
+              i_rn_sel == 4'd11 ? r11_out :
+              i_rn_sel == 4'd12 ? r12_out :
+              i_rn_sel == 4'd13 ? r13_out :
+              i_rn_sel == 4'd14 ? r14_out :
+                                  r15_out_rn ;
 
 
 endmodule
