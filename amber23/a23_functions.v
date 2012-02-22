@@ -92,22 +92,6 @@ oh_status_bits_mode =
 end
 endfunction
 
-//// ========================================================
-//// Convert mode into ascii name
-//// ========================================================
-//function [(14*8)-1:0]  mode_name;
-//input [4:0] mode;
-//begin
-//
-//mode_name    = mode == USR  ? "User          " :
-//               mode == SVC  ? "Supervisor    " :
-//               mode == IRQ  ? "Interrupt     " :
-//               mode == FIRQ ? "Fast Interrupt" :
-//                              "UNKNOWN       " ;
-//end
-//endfunction
-
-
 // ========================================================
 // Conditional Execution Function
 // ========================================================

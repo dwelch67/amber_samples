@@ -378,6 +378,7 @@ always @*
         default:           itype = SWI;
     endcase
 
+
 // ========================================================
 // Fixed fields within the instruction
 // ========================================================
@@ -828,8 +829,7 @@ always @*
             // (that is, it has the base in the transfer list), the overwriting is prevented.
             // This is true even when the abort occurs after the base word gets loaded
             restore_base_address_nxt        = instruction[20] &&
-                                                (instruction[{1'd0,instruction[19:16]}]);
-                                                //(instruction[15:0] & (1'd1 << instruction[19:16]));
+                                                (instruction[{1'b0,instruction[19:16]}]);
 
             // Increment or Decrement
             if ( instruction[23] ) // increment
@@ -1634,8 +1634,6 @@ assign dabt = dabt_reg || i_dabt;
 // ========================================================
 // Decompiler for debugging core - not synthesizable
 // ========================================================
-//synopsys translate_off
-//synopsys translate_on
 
 endmodule
 

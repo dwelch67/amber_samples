@@ -524,8 +524,6 @@ a23_register_bank u_register_bank(
 // ========================================================
 // Debug - non-synthesizable code
 // ========================================================
-//synopsys translate_off
-//synopsys translate_on
 
 endmodule
 

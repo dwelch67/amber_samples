@@ -261,14 +261,14 @@ assign r10_rds = i_mode_rds_exec[OH_FIRQ[1:0]] ? r10_firq : r10;
 assign r11_rds = i_mode_rds_exec[OH_FIRQ[1:0]] ? r11_firq : r11;
 assign r12_rds = i_mode_rds_exec[OH_FIRQ[1:0]] ? r12_firq : r12;
 
-assign r13_rds = i_mode_rds_exec[OH_USR[1:0]]  ? r13      :
-                 i_mode_rds_exec[OH_SVC[1:0]]  ? r13_svc  :
-                 i_mode_rds_exec[OH_IRQ[1:0]]  ? r13_irq  :
-                                            r13_firq ;
+assign r13_rds =  i_mode_rds_exec[OH_USR[1:0]]  ? r13      :
+                  i_mode_rds_exec[OH_SVC[1:0]]  ? r13_svc  :
+                  i_mode_rds_exec[OH_IRQ[1:0]]  ? r13_irq  :
+                                                  r13_firq ;
 
-assign r14_rds = i_mode_rds_exec[OH_USR[1:0]]  ? r14      :
-                 i_mode_rds_exec[OH_SVC[1:0]]  ? r14_svc  :
-                 i_mode_rds_exec[OH_IRQ[1:0]]  ? r14_irq  :
+assign r14_rds =  i_mode_rds_exec[OH_USR[1:0]]  ? r14      :
+                  i_mode_rds_exec[OH_SVC[1:0]]  ? r14_svc  :
+                  i_mode_rds_exec[OH_IRQ[1:0]]  ? r14_irq  :
                                             r14_firq ;
 
 // ========================================================

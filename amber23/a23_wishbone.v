@@ -69,6 +69,9 @@ input                       i_exclusive,      // high for read part of swap acce
 input       [31:0]          i_address,
 output                      o_stall,
 
+// Cache Accesses to Wishbone bus
+input                       i_cache_req,
+
 // Wishbone Bus
 output reg  [31:0]          o_wb_adr = 'd0,
 output reg  [3:0]           o_wb_sel = 'd0,
@@ -93,7 +96,10 @@ reg     [2:0]               wishbone_st = WB_IDLE;
 
 wire                        core_read_request;
 wire                        core_write_request;
+wire                        cache_read_request;
+wire                        cache_write_request;
 wire                        start_access;
+reg                         servicing_cache = 'd0;
 wire    [3:0]               byte_enable;
 reg                         exclusive_access = 'd0;
 wire                        read_ack;
@@ -108,7 +114,10 @@ reg                         wbuf_busy_r = 'd0;
 
 assign read_ack             = !o_wb_we && i_wb_ack;
 assign o_stall              = ( core_read_request  && !read_ack )       ||
+                              ( core_read_request  && servicing_cache ) ||
+                              ( core_write_request && servicing_cache ) ||
                               ( core_write_request && wishbone_st == WB_WAIT_ACK) ||
+                              ( cache_write_request && wishbone_st == WB_WAIT_ACK) ||
                               wbuf_busy_r;
 
                               // Don't stall on writes
@@ -118,12 +127,15 @@ assign o_stall              = ( core_read_request  && !read_ack )       ||
 assign core_read_request    = i_select && !i_write_enable;
 assign core_write_request   = i_select &&  i_write_enable;
 
+assign cache_read_request   = i_cache_req && !i_write_enable;
+assign cache_write_request  = i_cache_req &&  i_write_enable;
+
 assign wb_wait              = o_wb_stb && !i_wb_ack;
-assign start_access         = (core_read_request || core_write_request ) && !wb_wait ;
+assign start_access         = (core_read_request || core_write_request || i_cache_req) && !wb_wait ;
 
 // For writes the byte enable is always 4'hf
 assign byte_enable          = wbuf_busy_r                                   ? wbuf_sel_r    :
-                              ( core_write_request ) ? i_byte_enable :
+                              ( core_write_request || cache_write_request ) ? i_byte_enable :
                                                                               4'hf          ;
 
 
@@ -134,7 +146,7 @@ assign byte_enable          = wbuf_busy_r                                   ? wb
 
 
 always @( posedge i_clk )
-    if ( wb_wait && !wbuf_busy_r && (core_write_request) )
+    if ( wb_wait && !wbuf_busy_r && (core_write_request || cache_write_request) )
         begin
         wbuf_addr_r <= i_address;
         wbuf_sel_r  <= i_byte_enable;
@@ -174,10 +186,19 @@ always @( posedge i_clk )
                 o_wb_cyc            <= exclusive_access;
                 end
 
+            // cache has priority over the core
+            servicing_cache <= cache_read_request && !wait_write_ack;
+
             if ( wait_write_ack )
                 begin
                 // still waiting for last (write) access to complete
                 wishbone_st      <= WB_WAIT_ACK;
+                end
+            // do a burst of 4 read to fill a cache line
+            else if ( cache_read_request )
+                begin
+                wishbone_st         <= WB_BURST1;
+                exclusive_access    <= 1'd0;
                 end
             else if ( core_read_request )
                 begin
@@ -200,7 +221,7 @@ always @( posedge i_clk )
                     end
                 else
                     begin
-                    o_wb_we              <= core_write_request ;
+                    o_wb_we              <= core_write_request || cache_write_request;
                     // only update these on new wb access to make debug easier
                     o_wb_adr[31:2]       <= i_address[31:2];
                     end
@@ -256,10 +277,13 @@ always @( posedge i_clk )
                 o_wb_stb            <= 1'd0;
                 o_wb_cyc            <= exclusive_access;
                 o_wb_we             <= 1'd0;
+                servicing_cache     <= 1'd0;
                 end
-        default:
-            begin
-            end
+
+            default:
+                begin
+                end
+
 
     endcase
 
@@ -268,18 +292,6 @@ always @( posedge i_clk )
 // ========================================================
 // Debug Wishbone bus - not synthesizable
 // ========================================================
-//synopsys translate_off
-wire    [(14*8)-1:0]   xAS_STATE;
-
-
-assign xAS_STATE  = wishbone_st == WB_IDLE       ? "WB_IDLE"       :
-                    wishbone_st == WB_BURST1     ? "WB_BURST1"     :
-                    wishbone_st == WB_BURST2     ? "WB_BURST2"     :
-                    wishbone_st == WB_BURST3     ? "WB_BURST3"     :
-                    wishbone_st == WB_WAIT_ACK   ? "WB_WAIT_ACK"   :
-                                                      "UNKNOWN"       ;
-
-//synopsys translate_on
 
 endmodule
 

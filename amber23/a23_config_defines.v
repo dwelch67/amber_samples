@@ -1,12 +1,13 @@
 //////////////////////////////////////////////////////////////////
 //                                                              //
-//  Generic Library SRAM with single write enable               //
+//  Amber Configuration and Debug for the AMber 2 Core          //
 //                                                              //
 //  This file is part of the Amber project                      //
 //  http://www.opencores.org/project,amber                      //
 //                                                              //
 //  Description                                                 //
-//  Configurable depth and width.                               //
+//  Contains a set of defines used to configure and debug       //
+//  the Amber core                                              //
 //                                                              //
 //  Author(s):                                                  //
 //      - Conor Santifort, csantifort.amber@gmail.com           //
@@ -38,47 +39,40 @@
 //                                                              //
 //////////////////////////////////////////////////////////////////
 
+`ifndef _A23_CONFIG_DEFINES
+`define _A23_CONFIG_DEFINES
 
-module generic_sram_line_en
-#(
-parameter DATA_WIDTH            = 128,
-parameter ADDRESS_WIDTH         = 7,
-parameter INITIALIZE_TO_ZERO    = 0
-)
+// Cache Ways
+// Changing this parameter is the recommended
+// way to change the Amber cache size; 2, 3, 4 and 8 ways are supported.
+//   2 ways -> 8KB  cache
+//   3 ways -> 12KB cache
+//   4 ways -> 16KB cache
+//   8 ways -> 32KB cache
+`define A23_CACHE_WAYS 4
 
-(
-input                           i_clk,
-input      [DATA_WIDTH-1:0]     i_write_data,
-input                           i_write_enable,
-input      [ADDRESS_WIDTH-1:0]  i_address,
-output reg [DATA_WIDTH-1:0]     o_read_data
-);
+// --------------------------------------------------------------------
+// Debug switches 
+// --------------------------------------------------------------------
 
-reg [DATA_WIDTH-1:0]   mem  [0:2**ADDRESS_WIDTH-1];
+// Enable the decompiler. The default output file is amber.dis
+`define A23_DECOMPILE
 
-generate
-if ( INITIALIZE_TO_ZERO ) begin : init0
-integer i;
-initial
-    begin
-    for (i=0;i<2**ADDRESS_WIDTH;i=i+1)
-        mem[i] = 'd0;
-    end
-end
-endgenerate
+// Co-processor 15 debug. Registers in here control the cache
+//`define A23_COPRO15_DEBUG
+
+// Cache debug
+//`define A23_CACHE_DEBUG
+
+// --------------------------------------------------------------------
 
 
-always @(posedge i_clk)
-    begin
-    // read
-    o_read_data <= i_write_enable ? {DATA_WIDTH{1'd0}} : mem[i_address];
+// --------------------------------------------------------------------
+// File Names
+// --------------------------------------------------------------------
+`ifndef A23_DECOMPILE_FILE
+    `define A23_DECOMPILE_FILE    "amber.dis"
+`endif
 
-    // write
-    if (i_write_enable)
-        mem[i_address] <= i_write_data;
-    end
-
-
-
-endmodule
+`endif
 

@@ -24,6 +24,12 @@ reset:
     mov sp,#0x40000000
     add sp,sp,#0x10000
 
+    @ Enable the cache
+    mov r0,#0xffffffff
+    mcr 15, 0, r0, cr3, cr0, 0   @ cacheable area
+    mov r0, #1
+    mcr 15, 0, r0, cr2, cr0, 0   @ cache enable
+
     bl notmain
 
 halt:

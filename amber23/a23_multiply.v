@@ -94,16 +94,58 @@ assign sum34_b        =  product[1:0] == 2'b01 ? multiplier     :
                                                  34'd0          ;
 
 
+// Use DSP modules from Xilinx Spartan6 FPGA devices
+`ifdef XILINX_FPGA
+    // -----------------------------------
+    // 34-bit adder - booth multiplication
+    // -----------------------------------
+    `ifdef XILINX_SPARTAN6_FPGA
+        xs6_addsub_n #(.WIDTH(34))
+    `endif
+    `ifdef XILINX_VIRTEX6_FPGA
+        xv6_addsub_n #(.WIDTH(34))
+    `endif
 
-// -----------------------------------
-// 34-bit adder - booth multiplication
-// -----------------------------------
-assign sum =  product[67:34] + sum34_b;
+        u_xx_addsub_34_sum (
+        .i_a    ( product[67:34]        ),
+        .i_b    ( sum34_b               ),
+        .i_cin  ( 1'd0                  ),
+        .i_sub  ( 1'd0                  ),
+        .o_sum  ( sum                   ),
+        .o_co   (                       )
+    );
 
-// ------------------------------------
-// 33-bit adder - accumulate operations
-// ------------------------------------
-assign sum_acc1 = {1'd0, product[32:1]} + {1'd0, i_a_in};
+    // ------------------------------------
+    // 33-bit adder - accumulate operations
+    // ------------------------------------
+    `ifdef XILINX_SPARTAN6_FPGA
+        xs6_addsub_n #(.WIDTH(33))
+    `endif
+    `ifdef XILINX_VIRTEX6_FPGA
+        xv6_addsub_n #(.WIDTH(33))
+    `endif
+        u_xx_addsub_33_acc1 (
+        .i_a    ( {1'd0, product[32:1]} ),
+        .i_b    ( {1'd0, i_a_in}        ),
+        .i_cin  ( 1'd0                  ),
+        .i_sub  ( 1'd0                  ),
+        .o_sum  ( sum_acc1              ),
+        .o_co   (                       )
+    );
+
+`else
+
+    // -----------------------------------
+    // 34-bit adder - booth multiplication
+    // -----------------------------------
+    assign sum =  product[67:34] + sum34_b;
+
+    // ------------------------------------
+    // 33-bit adder - accumulate operations
+    // ------------------------------------
+    assign sum_acc1 = {1'd0, product[32:1]} + {1'd0, i_a_in};
+
+`endif
 
 
 always @*
@@ -127,7 +169,7 @@ always @*
         begin
         // Note that bit 0 is not part of the product. It is used during the booth
         // multiplication algorithm
-        product_nxt         = {3'd0, product[64:33], sum_acc1[31:0], 1'd0}; // Accumulate
+        product_nxt         = { 3'b0,product[64:33], sum_acc1[31:0], 1'd0}; // Accumulate
         end
 
     // Multiplication state counter

@@ -79,12 +79,12 @@ assign a     = (swap_sel ) ? i_b_in : i_a_in ;
 // B Select
 // ========================================================
 assign b     = (swap_sel ) ? i_a_in : i_b_in ;
-
+                             
 // ========================================================
 // Not Select
 // ========================================================
 assign b_not     = (not_sel ) ? ~b : b ;
-
+                             
 // ========================================================
 // Cin Select
 // ========================================================
@@ -98,7 +98,7 @@ assign carry_in  = (cin_sel==2'd0 ) ? 1'd0                   :
 assign carry_out = (cout_sel==1'd0 ) ? fadder_carry_out     :
                                        i_barrel_shift_carry ;
 
-// For non-addition/subtractions that incorporate a shift
+// For non-addition/subtractions that incorporate a shift 
 // operation, C is set to the last bit
 // shifted out of the value by the shifter.
 
@@ -118,7 +118,27 @@ assign  overflow_out    = out_sel == 4'd1 &&
 // ALU Operations
 // ========================================================
 
+`ifdef XILINX_FPGA
+
+    // XIlinx Spartan 6 DSP module
+    `ifdef XILINX_SPARTAN6_FPGA
+        xs6_addsub_n #(.WIDTH(33)) 
+    `endif
+    `ifdef XILINX_VIRTEX6_FPGA
+        xv6_addsub_n #(.WIDTH(33)) 
+    `endif
+        u_xx_addsub_33(
+        .i_a    ( {1'd0,a}      ),
+        .i_b    ( {1'd0,b_not}  ),
+        .i_cin  ( carry_in      ),
+        .i_sub  ( 1'd0          ),
+        .o_sum  ( fadder_out    ),
+        .o_co   (               )
+    );
+
+`else
 assign fadder_out       = { 1'd0,a} + {1'd0,b_not} + {32'd0,carry_in};
+`endif                                                
 
 assign fadder_carry_out = fadder_out[32];
 assign and_out          = a & b_not;
@@ -128,12 +148,12 @@ assign zero_ex8_out     = {24'd0,  b_not[7:0]};
 assign zero_ex_16_out   = {16'd0,  b_not[15:0]};
 assign sign_ex8_out     = {{24{b_not[7]}},  b_not[7:0]};
 assign sign_ex_16_out   = {{16{b_not[15]}}, b_not[15:0]};
-
+                          
 // ========================================================
 // Out Select
 // ========================================================
-assign o_out = out_sel == 4'd0 ? b_not            :
-               out_sel == 4'd1 ? fadder_out[31:0] :
+assign o_out = out_sel == 4'd0 ? b_not            : 
+               out_sel == 4'd1 ? fadder_out[31:0] : 
                out_sel == 4'd2 ? zero_ex_16_out   :
                out_sel == 4'd3 ? zero_ex8_out     :
                out_sel == 4'd4 ? sign_ex_16_out   :
@@ -147,8 +167,8 @@ assign o_flags       = {  o_out[31],      // negative
                          carry_out,       // carry
                          overflow_out     // overflow
                          };
-
-
+                         
+                                     
 endmodule
 
 
