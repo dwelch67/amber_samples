@@ -1,0 +1,15 @@
+
+
+ZHEADERS = zlib.h zconf.h deflate.h zutil.h crc32.h crc32.c trees.h gzguts.h inflate.h inftrees.h inffast.h inffixed.h
+ZSOURCE = compress.c deflate.c zutil.c adler32.c crc32.c trees.c gzwrite.c gzlib.c uncompr.c inflate.c inftrees.c inffast.c
+
+twain : twain.c ztest.h zlib.h  $(ZHEADERS) $(ZSOURCE)
+	gcc -O2 -o twain twain.c $(ZSOURCE)
+
+clean :
+	rm -f twain
+	rm -f *.o
+
+
+
+

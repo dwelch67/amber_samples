@@ -1,0 +1,13 @@
+
+MEMORY
+{
+   rom : ORIGIN = 0x00000000, LENGTH = 0xFFFFFF+1
+   ram : ORIGIN = 0x40000000, LENGTH = 0xFFFFFF+1
+}
+
+SECTIONS
+{
+   .text : { *(.text*) } > rom
+   .bss  : { *(.bss*) } > ram
+}
+
