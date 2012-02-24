@@ -20,10 +20,10 @@ unsigned char hexline[1024];
 
 
 //16Kbytes
-#define ROMMASK ((64<<10)-1)
+#define ROMMASK 0x00FFFFFF
 unsigned int rom[(ROMMASK+1)>>2];
 #define RAMBASE 0x40000000
-#define RAMMASK ((64<<10)-1)
+#define RAMMASK 0x00FFFFFF
 unsigned int ram[(RAMMASK+1)>>2];
 
 //-----------------------------------------------------------------------------
@@ -98,15 +98,19 @@ unsigned char t;
             printf("bad address 0x%08X\n",add);
             return(1);
         }
-        if(len&3)
+        t=hexline[3];
+        if(t!=0x02)
         {
-            printf("bad length\n");
-            return(1);
+            if(len&3)
+            {
+                printf("bad length\n");
+                return(1);
+            }
         }
+
         //:0011223344
         //;llaaaattdddddd
         //01234567890
-        t=hexline[3];
         switch(t)
         {
             default:
@@ -132,6 +136,11 @@ unsigned char t;
             case 0x01:
                 printf("End of data\n");
                 break;
+            case 0x02:
+                addhigh=hexline[5];
+                addhigh<<=8;
+                addhigh|=hexline[4];
+                addhigh<<=16;
         }
     }
 

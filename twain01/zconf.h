@@ -5,6 +5,8 @@
 
 /* @(#) $Id$ */
 
+/* this file has been modified from the original, dwelch */
+
 #ifndef ZCONF_H
 #define ZCONF_H
 
@@ -323,7 +325,7 @@
 #    ifdef FAR
 #      undef FAR
 #    endif
-#    include <windows.h>
+//#    include <windows.h>
      /* No need for _export, use ZLIB.DEF instead. */
      /* For complete Windows compatibility, use WINAPI, not __stdcall. */
 #    define ZEXPORT WINAPI
@@ -398,7 +400,7 @@ typedef uLong FAR uLongf;
 
 #ifdef STDC
 #  ifndef Z_SOLO
-#    include <sys/types.h>      /* for off_t */
+//#    include <sys/types.h>      /* for off_t */
 #  endif
 #endif
 
@@ -417,9 +419,9 @@ typedef uLong FAR uLongf;
 #endif
 
 #if (defined(Z_HAVE_UNISTD_H) || defined(Z_LARGE)) && !defined(Z_SOLO)
-#  include <unistd.h>       /* for SEEK_* and off_t */
+//#  include <unistd.h>       /* for SEEK_* and off_t */
 #  ifdef VMS
-#    include <unixio.h>     /* for off_t */
+//#    include <unixio.h>     /* for off_t */
 #  endif
 #  ifndef z_off_t
 #    define z_off_t off_t
