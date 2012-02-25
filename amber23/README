@@ -1,0 +1,55 @@
+
+This processor core/simulator is derived directly from the amber23
+core found at opencores
+
+http://opencores.com/project,amber
+http://en.wikipedia.org/wiki/Amber_(processor_core)
+
+Using verilator both to de-lint and create a simulator for this core
+these files have been modified from the original amber23 files.  To
+simplify the delint process non-synthesizable debug logic was simply
+removed, the rest of the modifications are just to delint the processor
+to the point that verilator is happy.
+
+
+The simulator manages rom and ram and some peripherals.  The amount
+of ram and rom are determined by the ROMMASK and RAMMASK variables in
+vmain.cpp  Vmain.cpp also contains the simulated peripherals.
+
+------------------------------------------------------------------
+Timer peripheral:
+
+0xD1000000 timer0, up counting 32 bit, at the rate of the system
+clock always running.
+
+0xD1000004 timer1, up counting 32 bit, at the rate of the system clock.
+This timer is always running.  This timer is reset when a 1 is written
+to bit 1 of the control register.  If bit 1 is set in the control
+register then a count that matches the timer1 match register will assert
+the timer1 interrupt bits in the timer status register.
+
+0xD1000014 timer1 match register.  If bit 1 in the control register is
+set then a timer1 count that matches this register will cause the
+timer1 interrupt status bits to assert in the timer status register and
+it will reset timer1 to zero.
+
+0xD1000020 timer control register
+
+The timers are free running all the time.  If a one is written to bit 1
+timer1 will be reset, and the timer1 interrupt bits will be reset.
+When bit 1 is set if timer1 matches the timer1 match register then the
+timer1 interrupt bits will be set in the status register.  When bit 1 is
+zero timer1 will free run, and not assert interrupt status bits, not
+reset on a timer1 match.
+
+When bit 10 is set in the timer control register and bit 10 in the
+status register are set the irq line to the processor will be asserted.
+
+When bit 11 is set in the timer control register and bit 11 in the
+status register are set the fiq line to the processor will be asserted.
+
+0xD1000024 timer status register
+
+Bit 10 and bit 11 are asserted when timer1 matches the timer1 match
+register and bit 1 is set in the timer control register.  Write one
+to clear.

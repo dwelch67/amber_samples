@@ -165,6 +165,11 @@ int main(int argc, char *argv[])
     unsigned int mask;
     unsigned int simhalt;
     unsigned int did_reset;
+    unsigned int timer_control;
+    unsigned int timer_status;
+    unsigned int timer0_tick;
+    unsigned int timer1_tick;
+    unsigned int timer1_match;
 
     FILE *fp;
 
@@ -201,6 +206,11 @@ int main(int argc, char *argv[])
     simhalt=0;
     did_reset=0;
     tick=0;
+    timer0_tick=0;
+    timer1_tick=0;
+    timer1_match=0xFFFFFFFF;
+    timer_control=0;
+    timer_status=0;
     lasttick=tick;
     while (!Verilated::gotFinish())
     {
@@ -211,6 +221,32 @@ int main(int argc, char *argv[])
         tick++;
         if(tick<lasttick) printf("tick rollover\n");
         lasttick=tick;
+
+        if((tick&1)==0)
+        {
+            timer0_tick++;
+            if(timer_control&0x0002)
+            {
+                if(timer1_tick>=timer1_match)
+                {
+                    timer_status|=0x00000C00;
+                    timer1_tick=0x00000000;
+                }
+                else
+                {
+                    timer1_tick++;
+                }
+            }
+            else
+            {
+                timer1_tick++;
+            }
+        }
+
+        top->i_irq=0;
+        if((timer_control&timer_status)&0x400) top->i_irq=1;
+        top->i_firq=0;
+        if((timer_control&timer_status)&0x800) top->i_firq=1;
 
         if(did_reset)
         {
@@ -271,6 +307,7 @@ int main(int argc, char *argv[])
                     else
                     {
                         //peripherals
+                        //dummy uart tx register
                         if(addr==0xD0000000)
                         {
                             if(top->o_wb_we)
@@ -281,20 +318,85 @@ int main(int argc, char *argv[])
                                 }
                             }
                         }
+                        //timer starts here
                         if(addr==0xD1000000)
                         {
                             if(top->o_wb_we)
                             {
                                 if((tick&1)==0)
                                 {
-                                    printf("cant write or change timer tick\n");
+                                    printf("cant write timer0 tick\n");
                                 }
                             }
                             else
                             {
-                                top->i_wb_dat=tick;
+                                top->i_wb_dat=timer0_tick;
                             }
                         }
+                        if(addr==0xD1000004)
+                        {
+                            if(top->o_wb_we)
+                            {
+                                if((tick&1)==0)
+                                {
+                                    printf("cant write timer1 tick\n");
+                                }
+                            }
+                            else
+                            {
+                                top->i_wb_dat=timer1_tick;
+                            }
+                        }
+                        if(addr==0xD1000014)
+                        {
+                            if(top->o_wb_we)
+                            {
+                                if((tick&1)==0)
+                                {
+                                    timer1_match=top->o_wb_dat;
+                                    //printf("write timer1 match 0x%08X\n",timer1_match);
+                                }
+                            }
+                            else
+                            {
+                                top->i_wb_dat=timer1_match;
+                            }
+                        }
+                        if(addr==0xD1000020)
+                        {
+                            if(top->o_wb_we)
+                            {
+                                if((tick&1)==0)
+                                {
+                                    timer_control=top->o_wb_dat;
+                                    //printf("write timer control 0x%08X\n",timer_control);
+                                    if(timer_control&0x0002)
+                                    {
+                                        timer1_tick=0x00000000;
+                                        timer_status&=~0xC00;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                top->i_wb_dat=timer_control;
+                            }
+                        }
+                        if(addr==0xD1000024)
+                        {
+                            if(top->o_wb_we)
+                            {
+                                if((tick&1)==0)
+                                {
+                                    timer_status&=~top->o_wb_dat;
+                                }
+                            }
+                            else
+                            {
+                                top->i_wb_dat=timer_status;
+                            }
+                        }
+                        //debug register
                         if(addr==0xE0000000)
                         {
                             if(top->o_wb_we)
@@ -305,6 +407,7 @@ int main(int argc, char *argv[])
                                 }
                             }
                         }
+                        //stop simulation
                         if(addr==0xF0000000)
                         {
                             simhalt=1;

@@ -1,0 +1,5 @@
+
+This is an embedded version of zlib (http://zlib.net) that takes some
+data, compresses it, decomresses it and compares it to the original.
+
+Some of the zlib files have been modified from the original.
