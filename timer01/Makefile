@@ -13,6 +13,7 @@ clean :
 	rm -f *.elf
 	rm -f *.list
 	rm -f *.hex
+	rm -f *.vcd
 
 vectors.o : vectors.s
 	$(ARMGNU)-as $(AOPS) vectors.s -o vectors.o

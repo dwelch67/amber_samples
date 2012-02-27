@@ -19,6 +19,7 @@ clean :
 	rm -f *.list
 	rm -f *.elf
 	rm -f *.hex
+	rm -f *.vcd
 
 
 vectors.o : vectors.s
