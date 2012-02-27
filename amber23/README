@@ -1,4 +1,7 @@
 
+See the top level readme for more information on running the simulator
+and viewing the waveforms if desired, etc.
+
 This processor core/simulator is derived directly from the amber23
 core found at opencores
 
@@ -11,10 +14,16 @@ simplify the delint process non-synthesizable debug logic was simply
 removed, the rest of the modifications are just to delint the processor
 to the point that verilator is happy.
 
-
 The simulator manages rom and ram and some peripherals.  The amount
 of ram and rom are determined by the ROMMASK and RAMMASK variables in
 vmain.cpp  Vmain.cpp also contains the simulated peripherals.
+
+Since the peripherals and ram are simulated in software to provide
+visibility into the simulation as to what is going on, a verilog
+wrapper was added that is just a shim between the a23_core and the
+simulated rom/ram/perhipherals with key variables in the simulator
+being fed back into the logic as inputs, just for visibility in the
+waveforms.
 
 ------------------------------------------------------------------
 Timer peripheral:

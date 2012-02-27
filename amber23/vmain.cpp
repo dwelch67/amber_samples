@@ -5,9 +5,9 @@
 #include <verilated.h>
 #include <verilated_vcd_c.h>
 
-#include "Va23_core.h"
+#include "Vamber_wrapper.h"
 
-Va23_core *top;
+Vamber_wrapper *top;
 #if VM_TRACE
 VerilatedVcdC *trace;
 #endif
@@ -194,7 +194,7 @@ int main(int argc, char *argv[])
     Verilated::traceEverOn(true);
 #endif
 
-    top = new Va23_core;
+    top = new Vamber_wrapper;
 
 #if VM_TRACE
     trace = new VerilatedVcdC;
@@ -217,6 +217,11 @@ int main(int argc, char *argv[])
 
         top->i_wb_dat=0;
         top->i_wb_ack=0;
+
+        top->uart_char = 0x00;
+        top->uart_char_strobe = 0;
+        top->test_out = 0x00000000;
+        top->test_out_strobe = 0;
 
         tick++;
         if(tick<lasttick) printf("tick rollover\n");
@@ -315,6 +320,9 @@ int main(int argc, char *argv[])
                                 if((tick&1)==0)
                                 {
                                     printf("%c",top->o_wb_dat&0xFF);
+
+                                    top->uart_char=top->o_wb_dat&0xFF;
+                                    top->uart_char_strobe=1;
                                 }
                             }
                         }
@@ -404,6 +412,8 @@ int main(int argc, char *argv[])
                                 if((tick&1)==0)
                                 {
                                     printf("show 0x%08X\n",top->o_wb_dat);
+                                    top->test_out = top->o_wb_dat;
+                                    top->test_out_strobe = 1;
                                 }
                             }
                         }
@@ -425,6 +435,15 @@ int main(int argc, char *argv[])
                 did_reset = 1;
             }
         }
+
+        top->timer0_count = timer0_tick;
+        top->timer1_count = timer1_tick;
+        top->timer1_match = timer1_match;
+        top->timer_status = timer_status;
+        top->timer_control = timer_control;
+
+
+
         top->i_clk = (tick & 1);
         top->eval();
 #if VM_TRACE

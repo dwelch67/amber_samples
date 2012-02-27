@@ -1,5 +1,6 @@
 
 VERILOG_FILES = \
+	amber_wrapper.v \
 	a23_alu.v \
 	a23_barrel_shift.v \
 	a23_coprocessor.v \
@@ -15,9 +16,9 @@ VERILOG_FILES = \
 	generic_sram_byte_en.v \
 	generic_sram_line_en.v
 
-obj_dir/Va23_core : vmain.cpp $(VERILOG_FILES)
-	verilator --cc a23_core.v --exe vmain.cpp --trace --trace-underscore 
-	make -C obj_dir/ -f Va23_core.mk
+obj_dir/Vamber_wrapper : vmain.cpp $(VERILOG_FILES)
+	verilator --cc amber_wrapper.v --exe vmain.cpp --trace --trace-underscore 
+	make -C obj_dir/ -f Vamber_wrapper.mk
 
 clean :
 	rm -rf obj_dir
