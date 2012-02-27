@@ -1,0 +1,7 @@
+
+This is a work in progress, dont use, use amber23 instead.
+
+working on moving the peripherals, etc into verilog instead of being
+just software.  the timer appears to work but having an irq problem which
+is probably a ram/rom thing.
+
